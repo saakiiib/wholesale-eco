@@ -1,13 +1,14 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController};
+use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController,AccountPortalController,AdminPortalController};
 Route::get('/',[ShopController::class,'home'])->name('home');
 Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
+Route::get('/products/{product:slug}',[ShopController::class,'product'])->name('products.show');
 Route::get('/basket',[CartController::class,'index'])->name('cart.index');
 Route::post('/basket/add',[CartController::class,'add'])->name('cart.add');
 Route::post('/basket/update',[CartController::class,'update'])->name('cart.update');
 Route::get('/checkout',[CheckoutController::class,'form'])->name('checkout.form');
-Route::post('/checkout',[CheckoutController::class,'submit'])->name('checkout.submit');
+Route::post('/checkout',[CheckoutController::class,'submit'])->middleware('active-business')->name('checkout.submit');
 Route::get('/checkout/success/{token}',[CheckoutController::class,'success'])->name('checkout.success');
 Route::get('/checkout/cancel/{token}',[CheckoutController::class,'cancel'])->name('checkout.cancel');
 Route::post('/stripe/webhook',StripeWebhookController::class)->name('stripe.webhook');
@@ -16,16 +17,48 @@ Route::post('/login',[AuthController::class,'login'])->name('login.submit');
 Route::get('/register',[AuthController::class,'registerForm'])->name('register');
 Route::post('/register',[AuthController::class,'register'])->name('register.submit');
 Route::post('/logout',[AuthController::class,'logout'])->middleware('auth')->name('logout');
-Route::middleware('auth')->prefix('account')->name('account.')->group(function(){
- Route::get('/',[AccountController::class,'dashboard'])->name('dashboard');
+Route::middleware(['auth','active-business'])->prefix('account')->name('account.')->group(function(){
+ Route::get('/',[AccountPortalController::class,'dashboard'])->name('dashboard');
  Route::post('/reorder/{order}',[AccountController::class,'reorder'])->name('reorder');
  Route::post('/lists',[AccountController::class,'saveList'])->name('lists.save');
  Route::post('/lists/{list}/add',[AccountController::class,'loadList'])->name('lists.load');
 });
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
- Route::get('/',[AdminController::class,'dashboard'])->name('dashboard');
+ Route::get('/',[AdminPortalController::class,'dashboard'])->name('dashboard');
  Route::get('/variants',[AdminController::class,'variants'])->name('variants');
  Route::post('/stock/{variant}',[AdminController::class,'stock'])->name('stock');
  Route::post('/tiers/{variant}',[AdminController::class,'tier'])->name('tier');
  Route::post('/orders/{order}/status',[AdminController::class,'status'])->name('orders.status');
+});
+
+// V3 portal modules; all actions preserve the account/admin middleware above.
+Route::middleware(['auth','active-business'])->prefix('account')->name('account.')->group(function(){
+ Route::get('/orders',[AccountPortalController::class,'orders'])->name('orders.index');
+ Route::get('/orders/{order}',[AccountPortalController::class,'order'])->name('orders.show');
+ Route::get('/orders/{order}/print',[AccountPortalController::class,'orderPrint'])->name('orders.print');
+ Route::get('/saved-lists',[AccountPortalController::class,'lists'])->name('lists.index');
+ Route::delete('/saved-lists/{list}',[AccountPortalController::class,'deleteList'])->name('lists.destroy');
+ Route::get('/addresses',[AccountPortalController::class,'addresses'])->name('addresses.index');
+ Route::post('/addresses',[AccountPortalController::class,'storeAddress'])->name('addresses.store');
+ Route::delete('/addresses/{address}',[AccountPortalController::class,'deleteAddress'])->name('addresses.destroy');
+ Route::get('/profile',[AccountPortalController::class,'profile'])->name('profile');
+ Route::put('/profile',[AccountPortalController::class,'updateProfile'])->name('profile.update');
+});
+Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/products',[AdminPortalController::class,'products'])->name('products.index');
+ Route::get('/products/new',[AdminPortalController::class,'createProduct'])->name('products.create');
+ Route::post('/products',[AdminPortalController::class,'storeProduct'])->name('products.store');
+ Route::get('/products/{product}/edit',[AdminPortalController::class,'editProduct'])->name('products.edit');
+ Route::put('/products/{product}',[AdminPortalController::class,'updateProduct'])->name('products.update');
+ Route::get('/products/{product}/variants',[AdminPortalController::class,'variants'])->name('products.variants');
+ Route::post('/products/{product}/variants',[AdminPortalController::class,'createVariant'])->name('products.variants.store');
+ Route::put('/variants/{variant}',[AdminPortalController::class,'editVariant'])->name('products.variants.update');
+ Route::get('/categories',[AdminPortalController::class,'categories'])->name('categories.index');
+ Route::post('/categories',[AdminPortalController::class,'storeCategory'])->name('categories.store');
+ Route::get('/customers',[AdminPortalController::class,'customers'])->name('customers.index');
+ Route::get('/customers/{business}',[AdminPortalController::class,'customer'])->name('customers.show');
+ Route::put('/customers/{business}/status',[AdminPortalController::class,'customerStatus'])->name('customers.status');
+ Route::get('/orders',[AdminPortalController::class,'orders'])->name('orders.index');
+ Route::get('/orders/{order}',[AdminPortalController::class,'order'])->name('orders.show');
+ Route::get('/reports',[AdminPortalController::class,'reports'])->name('reports');
 });

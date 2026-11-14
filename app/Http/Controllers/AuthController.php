@@ -9,6 +9,7 @@ class AuthController {
  public function form(){return view('auth.login');}
  public function login(Request $request){$credentials=$request->validate(['email'=>'required|email','password'=>'required|string']);
   if(!Auth::attempt($credentials))return back()->withErrors(['email'=>'Invalid login details'])->onlyInput('email');
+  if(auth()->user()->business_id && auth()->user()->business?->status==='suspended'){Auth::logout();$request->session()->invalidate();$request->session()->regenerateToken();return back()->withErrors(['email'=>'Your trade account is currently suspended. Please contact support.']);}
   $request->session()->regenerate();return redirect()->intended(auth()->user()->isAdmin()?route('admin.dashboard'):route('account.dashboard'));
  }
  public function registerForm(){return view('auth.register');}

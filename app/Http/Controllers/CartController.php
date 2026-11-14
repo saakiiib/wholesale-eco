@@ -14,7 +14,7 @@ class CartController {
   $variant=ProductVariant::findOrFail($data['variant_id']);abort_unless($variant->active,422);
   $cart=$request->session()->get('cart',[]);$key=(string)$variant->id;
   $cart[$key]=min(10000,((int)($cart[$key]??0))+$data['packs']);$request->session()->put('cart',$cart);
-  return redirect()->back()->with('success','Added to basket');
+  return redirect()->back()->with('basket_added', ['name'=>$variant->product->name, 'packs'=>(int)$data['packs']])->with('success','Product added to your basket.');
  }
  public function update(Request $request){
   $data=$request->validate(['variant_id'=>'required|integer|exists:product_variants,id','packs'=>'required|integer|min:0|max:10000']);
