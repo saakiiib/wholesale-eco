@@ -1,5 +1,6 @@
 @extends('layouts.app')
-@section('title',$product->name.' — Wholesale Eco Products')
+@section('meta_description', $product->meta_description ?: 'Wholesale Eco Products packaging range')
+@section('title',($product->meta_title ?: $product->name).' — Wholesale Eco Products')
 @section('content')
 @php
 $gallery=[];

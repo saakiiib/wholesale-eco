@@ -1,0 +1,6 @@
+@extends('portal.shell',['portal'=>'admin'])
+@section('title',$page?'Edit website page':'New website page')
+@section('portalContent')
+@include('portal.admin._head',['eyebrow'=>'CONTENT EDITOR','heading'=>$page?'Edit page':'Create page','subtitle'=>'Plain text page content is safely escaped when published.','back'=>route('admin.content.index')])
+<section class="portal-card portal-form-width"><form class="portal-form" action="{{$page?route('admin.content.update',$page):route('admin.content.store')}}" method="post">@csrf @if($page)@method('PUT')@endif<label>Page title<input name="title" value="{{old('title',$page?->title)}}" required></label><label>Page slug<input name="slug" value="{{old('slug',$page?->slug)}}" placeholder="delivery-information" required></label><label>Page content<textarea name="body" rows="12">{{old('body',$page?->body)}}</textarea></label><label>Meta title<input name="meta_title" maxlength="180" value="{{old('meta_title',$page?->meta_title)}}"></label><label>Meta description<textarea name="meta_description" maxlength="320">{{old('meta_description',$page?->meta_description)}}</textarea></label><label class="portal-check"><input type="checkbox" name="published" value="1" @checked(old('published',$page?->published??false))> Publish page</label><button class="btn">Save page</button></form></section>
+@endsection

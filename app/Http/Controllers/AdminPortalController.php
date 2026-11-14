@@ -8,16 +8,23 @@ use Illuminate\Validation\Rule;
 class AdminPortalController {
  public function dashboard(){return view('portal.admin.dashboard',[
   'orders'=>Order::latest()->take(8)->get(), 'revenue'=>Order::where('payment_status','paid')->sum('grand_total_pence'),
-  'ordersCount'=>Order::count(), 'businessCount'=>Business::count(),
-  'lowStock'=>ProductVariant::with('product')->where('stock_packs','<=',10)->orderBy('stock_packs')->take(7)->get(),
-  'productsCount'=>Product::count()]);}
+  'ordersCount'=>Order::count(), 'businessCount'=>Business::where('status','active')->count(),
+  'lowStock'=>ProductVariant::with('product')->where('stock_packs','<=',(int)\App\Models\StoreSetting::getValue('low_stock_threshold','10'))->orderBy('stock_packs')->take(7)->get(),
+  'productsCount'=>Product::count(),
+  'lowStockCount'=>ProductVariant::where('stock_packs','<=',(int)\App\Models\StoreSetting::getValue('low_stock_threshold','10'))->count(),
+  'openOrders'=>Order::whereIn('status',['paid','processing'])->count(),
+  'monthlySales'=>Order::where('payment_status','paid')->where('paid_at','>=',now()->startOfMonth())->sum('grand_total_pence'),
+  'pipeline'=>Order::selectRaw('status,COUNT(*) as total')->groupBy('status')->pluck('total','status'),
+  'chartDays'=>collect(range(6,0))->map(fn($n)=>now()->subDays($n)->format('D'))->all(),
+  'chartValues'=>collect(range(6,0))->map(fn($n)=>(int)Order::where('payment_status','paid')->whereDate('paid_at',now()->subDays($n)->toDateString())->sum('grand_total_pence'))->all()
+ ]);}
  public function products(Request $r){$q=Product::with('category')->withCount('variants')->latest();if($r->filled('q'))$q->where('name','like','%'.$r->query('q').'%');return view('portal.admin.products',['products'=>$q->paginate(16)->withQueryString(),'categories'=>Category::orderBy('name')->get()]);}
  public function createProduct(){return view('portal.admin.product-form',['product'=>null,'categories'=>Category::orderBy('name')->get()]);}
  public function productForm(?Product $product=null){return view('portal.admin.product-form',['product'=>$product,'categories'=>Category::orderBy('name')->get()]);}
  public function editProduct(Product $product){return $this->productForm($product->load('variants'));}
  private function productData(Request $r,?Product $product=null):array {return $r->validate([
   'name'=>'required|string|max:200','slug'=>['nullable','alpha_dash','max:200',Rule::unique('products','slug')->ignore($product?->id)],
-  'description'=>'nullable|string|max:10000','category_id'=>'nullable|exists:categories,id','image_path'=>'nullable|string|max:500','active'=>'sometimes|boolean']);}
+  'description'=>'nullable|string|max:10000','category_id'=>'nullable|exists:categories,id','image_path'=>'nullable|string|max:500','meta_title'=>'nullable|string|max:180','meta_description'=>'nullable|string|max:320','active'=>'sometimes|boolean']);}
  public function storeProduct(Request $r){$data=$this->productData($r);$slug=$data['slug']??Str::slug($data['name']);if(!$slug || Product::where('slug',$slug)->exists())return back()->withErrors(['slug'=>'Please choose a unique product slug.'])->withInput();$data['slug']=$slug;$data['active']=$r->boolean('active');Product::create($data);return redirect()->route('admin.products.index')->with('success','Product created. Add purchasable variants next.');}
  public function updateProduct(Request $r,Product $product){$data=$this->productData($r,$product);if(empty($data['slug']))unset($data['slug']);$data['active']=$r->boolean('active');$product->update($data);return back()->with('success','Product updated.');}
  public function variants(Product $product){return view('portal.admin.product-variants',['product'=>$product->load('variants.priceTiers')]);}

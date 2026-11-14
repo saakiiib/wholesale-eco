@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController,AccountPortalController,AdminPortalController};
+use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController,AccountPortalController,AdminPortalController,AdminManagementController};
 Route::get('/',[ShopController::class,'home'])->name('home');
 Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
 Route::get('/products/{product:slug}',[ShopController::class,'product'])->name('products.show');
@@ -62,3 +62,32 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::get('/orders/{order}',[AdminPortalController::class,'order'])->name('orders.show');
  Route::get('/reports',[AdminPortalController::class,'reports'])->name('reports');
 });
+
+// V6 admin management modules — all routes require authenticated admin access.
+Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/products/{product}/images',[AdminManagementController::class,'images'])->name('images.index');
+ Route::post('/products/{product}/images',[AdminManagementController::class,'addImage'])->name('images.store');
+ Route::delete('/products/{product}/images/{image}',[AdminManagementController::class,'removeImage'])->name('images.destroy');
+ Route::put('/customers/{business}/details',[AdminManagementController::class,'updateCustomer'])->name('customers.details');
+ Route::get('/categories/{category}/edit',[AdminManagementController::class,'editCategory'])->name('categories.edit');
+ Route::put('/categories/{category}',[AdminManagementController::class,'updateCategory'])->name('categories.update');
+ Route::get('/settings',[AdminManagementController::class,'settings'])->name('settings.index');
+ Route::put('/settings',[AdminManagementController::class,'updateSettings'])->name('settings.update');
+ Route::get('/shipping',[AdminManagementController::class,'shipping'])->name('shipping.index');
+ Route::post('/shipping',[AdminManagementController::class,'addShipping'])->name('shipping.store');
+ Route::put('/shipping/{zone}',[AdminManagementController::class,'updateShipping'])->name('shipping.update');
+ Route::get('/content',[AdminManagementController::class,'content'])->name('content.index');
+ Route::get('/content/new',[AdminManagementController::class,'editContent'])->name('content.create');
+ Route::post('/content',[AdminManagementController::class,'saveContent'])->name('content.store');
+ Route::get('/content/{page}/edit',[AdminManagementController::class,'editContent'])->name('content.edit');
+ Route::put('/content/{page}',[AdminManagementController::class,'updateContent'])->name('content.update');
+ Route::get('/seo',[AdminManagementController::class,'seo'])->name('seo.index');
+ Route::put('/seo',[AdminManagementController::class,'saveSeo'])->name('seo.update');
+ Route::get('/team',[AdminManagementController::class,'team'])->name('team.index');
+ Route::post('/team',[AdminManagementController::class,'createTeam'])->name('team.store');
+ Route::put('/team/{user}',[AdminManagementController::class,'updateTeam'])->name('team.update');
+ Route::get('/audit-log',[AdminManagementController::class,'auditLog'])->name('audit.index');
+ Route::post('/orders/{order}/tracking',[AdminManagementController::class,'saveTracking'])->name('orders.tracking');
+ Route::get('/orders-export',[AdminManagementController::class,'exportOrders'])->name('orders.export');
+});
+Route::get('/pages/{page:slug}',function(\App\Models\CmsPage $page){abort_unless($page->published,404);return view('shop.cms-page',compact('page'));})->name('pages.show');

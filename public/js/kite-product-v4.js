@@ -17,3 +17,14 @@ document.addEventListener('DOMContentLoaded',()=>{
  }));
  document.querySelectorAll('.kite-stepper').forEach(stepper=>{const input=stepper.querySelector('input'); const adjust=(delta)=>{const min=Number(input.min)||1;const max=Number(input.max)||10000;input.value=String(Math.min(max,Math.max(min,(Number(input.value)||min)+delta)));};stepper.querySelector('.kite-step-up')?.addEventListener('click',()=>adjust(1));stepper.querySelector('.kite-step-down')?.addEventListener('click',()=>adjust(-1));});
 });
+
+// Gallery thumbnails are shared by product and category range pages.
+document.addEventListener('DOMContentLoaded',()=>{
+ const main=document.getElementById('gallery-active-img');
+ if(!main)return;
+ document.querySelectorAll('[data-gallery-src]').forEach(button=>button.addEventListener('click',()=>{
+   main.src=button.dataset.gallerySrc;
+   main.alt=button.dataset.galleryAlt||'Product image';
+   document.querySelectorAll('[data-gallery-src]').forEach(b=>b.classList.toggle('is-selected',b===button));
+ }));
+});

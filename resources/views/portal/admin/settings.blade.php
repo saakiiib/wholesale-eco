@@ -1,0 +1,16 @@
+@extends('portal.shell',['portal'=>'admin'])
+@section('title','Business setup')
+@section('portalContent')
+@include('portal.admin._head',['eyebrow'=>'BUSINESS SETUP','heading'=>'Store settings','subtitle'=>'Manage business identity, contact information and stock alerts.'])
+<div class="portal-two"><section class="portal-card"><form class="portal-form" method="post" action="{{route('admin.settings.update')}}">@csrf @method('PUT')
+@foreach([['business_name','Business / trading name'],['business_email','Business email'],['business_phone','Telephone'],['vat_number','VAT registration number'],['company_number','Company registration number'],['support_email','Support email']] as $field)<label>{{$field[1]}}<input name="{{$field[0]}}" value="{{old($field[0],$settings[$field[0]]??($field[0]==='business_name'?'Wholesale Eco Products':''))}}" {{$field[0]==='business_name'||$field[0]==='business_email'?'required':''}}></label>@endforeach
+<label>Business address<textarea name="business_address">{{old('business_address',$settings['business_address']??'')}}</textarea></label><label>Low-stock threshold (packs)<input type="number" min="0" max="10000" name="low_stock_threshold" value="{{old('low_stock_threshold',$settings['low_stock_threshold']??10)}}" required></label>
+<h3>Homepage content</h3>
+<label>Hero eyebrow<input name="hero_label" maxlength="100" value="{{old('hero_label',$settings['hero_label']??'')}}" placeholder="THE SMARTER WAY TO STOCK UP"></label>
+<label>Hero headline<input name="hero_title" maxlength="160" value="{{old('hero_title',$settings['hero_title']??'')}}" placeholder="Packaging that works for your business."></label>
+<label>Hero description<textarea name="hero_description" maxlength="450">{{old('hero_description',$settings['hero_description']??'')}}</textarea></label>
+<label>Promotional section heading<input name="promo_heading" maxlength="180" value="{{old('promo_heading',$settings['promo_heading']??'')}}"></label>
+<label>Promotional section body<textarea name="promo_description" maxlength="600">{{old('promo_description',$settings['promo_description']??'')}}</textarea></label><h3>Search defaults</h3>
+<label>Default SEO page title<input name="default_meta_title" maxlength="180" value="{{old('default_meta_title',$settings['default_meta_title']??'')}}"></label><label>Default SEO description<textarea name="default_meta_description" maxlength="320">{{old('default_meta_description',$settings['default_meta_description']??'')}}</textarea></label><button class="btn">Save business details</button></form></section>
+<section class="portal-card"><h2>Store configuration</h2><p>Store name, support details and metadata can be managed here. Current checkout payment credentials are environment-managed for security.</p><div class="portal-line"><span>Payment provider</span><strong>Stripe (environment)</strong></div><div class="portal-line"><span>Inventory units</span><strong>Cases / packs</strong></div><div class="portal-line"><span>Currency</span><strong>GBP</strong></div><p><strong>Production note:</strong> Homepage copy changes are applied immediately. Payment fees and checkout delivery charges remain independently configured for safety. Those integrations require separate testing.</p></section></div>
+@endsection

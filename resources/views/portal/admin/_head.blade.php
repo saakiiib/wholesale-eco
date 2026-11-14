@@ -1,0 +1,1 @@
+<div class="portal-heading"><div><span class="portal-eyebrow">{{ $eyebrow ?? 'STORE OPERATIONS' }}</span><h1>{{ $heading }}</h1><p>{{ $subtitle ?? '' }}</p></div>@isset($back)<a href="{{ $back }}" class="portal-minibtn">← Back</a>@endisset</div>
