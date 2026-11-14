@@ -5,7 +5,17 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 class ShopController {
- public function home(){return view('shop.home',['categories'=>Category::where('active',true)->orderBy('sort_order')->get(),'homepageSettings'=>\App\Models\StoreSetting::whereIn('key',['hero_label','hero_title','hero_description','promo_heading','promo_description'])->pluck('value','key'), 'featured'=>ProductVariant::with('product')->where('active',true)->whereHas('product',fn($q)=>$q->where('active',true))->take(6)->get()]);}
+ public function home(){
+  // Stored settings override these defaults; never index a missing key in the view.
+  $homepageSettings=collect([
+   'hero_label'=>'THE SMARTER WAY TO STOCK UP',
+   'hero_title'=>'Packaging that works for your business.',
+   'hero_description'=>'Premium everyday packaging at wholesale prices. Everything your café, takeaway or restaurant needs, ready to order in a few clicks.',
+   'promo_heading'=>'Less time ordering. More time serving.',
+   'promo_description'=>'From your morning coffee rush to the evening takeaway rush, restocking should be the easiest part of your day. Compare case sizes, see volume savings and order what you need.',
+  ])->merge(\App\Models\StoreSetting::whereIn('key',['hero_label','hero_title','hero_description','promo_heading','promo_description'])->pluck('value','key')->filter(fn($v)=>filled($v)));
+  return view('shop.home',['categories'=>Category::where('active',true)->orderBy('sort_order')->get(),'homepageSettings'=>$homepageSettings,'featured'=>ProductVariant::with('product')->where('active',true)->whereHas('product',fn($q)=>$q->where('active',true))->take(6)->get()]);
+ }
  public function catalogue(Request $request){
   $categories=Category::where('active',true)->orderBy('sort_order')->orderBy('name')->get();
   $category=null;
