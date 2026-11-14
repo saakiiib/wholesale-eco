@@ -1,0 +1,31 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController};
+Route::get('/',[ShopController::class,'home'])->name('home');
+Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
+Route::get('/basket',[CartController::class,'index'])->name('cart.index');
+Route::post('/basket/add',[CartController::class,'add'])->name('cart.add');
+Route::post('/basket/update',[CartController::class,'update'])->name('cart.update');
+Route::get('/checkout',[CheckoutController::class,'form'])->name('checkout.form');
+Route::post('/checkout',[CheckoutController::class,'submit'])->name('checkout.submit');
+Route::get('/checkout/success/{token}',[CheckoutController::class,'success'])->name('checkout.success');
+Route::get('/checkout/cancel/{token}',[CheckoutController::class,'cancel'])->name('checkout.cancel');
+Route::post('/stripe/webhook',StripeWebhookController::class)->name('stripe.webhook');
+Route::get('/login',[AuthController::class,'form'])->name('login');
+Route::post('/login',[AuthController::class,'login'])->name('login.submit');
+Route::get('/register',[AuthController::class,'registerForm'])->name('register');
+Route::post('/register',[AuthController::class,'register'])->name('register.submit');
+Route::post('/logout',[AuthController::class,'logout'])->middleware('auth')->name('logout');
+Route::middleware('auth')->prefix('account')->name('account.')->group(function(){
+ Route::get('/',[AccountController::class,'dashboard'])->name('dashboard');
+ Route::post('/reorder/{order}',[AccountController::class,'reorder'])->name('reorder');
+ Route::post('/lists',[AccountController::class,'saveList'])->name('lists.save');
+ Route::post('/lists/{list}/add',[AccountController::class,'loadList'])->name('lists.load');
+});
+Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/',[AdminController::class,'dashboard'])->name('dashboard');
+ Route::get('/variants',[AdminController::class,'variants'])->name('variants');
+ Route::post('/stock/{variant}',[AdminController::class,'stock'])->name('stock');
+ Route::post('/tiers/{variant}',[AdminController::class,'tier'])->name('tier');
+ Route::post('/orders/{order}/status',[AdminController::class,'status'])->name('orders.status');
+});

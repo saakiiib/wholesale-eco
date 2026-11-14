@@ -1,0 +1,7 @@
+@extends('layouts.app')
+@section('title','Admin dashboard')
+@section('content')<div class="pageintro"><span class="eyebrow">Administration</span><h1>Wholesale operations</h1><p>Orders, customers and stock at a glance.</p></div>
+<div class="statrow"><div class="tile"><small>Paid revenue</small><h2>£{{number_format($sales/100,2)}}</h2></div><div class="tile"><small>Business accounts</small><h2>{{$customers}}</h2></div><div class="tile"><small>Manage pricing & inventory</small><a class="btn small" href="{{route('admin.variants')}}">Open inventory →</a></div></div>
+<section class="panel"><h2>Latest orders</h2><div class="table-scroll"><table><thead><tr><th>Order</th><th>Business</th><th>Payment</th><th>Fulfilment</th><th>Total</th><th>Action</th></tr></thead><tbody>@foreach($orders as $o)<tr><td>{{$o->order_number}}</td><td>{{$o->business_name}}</td><td>{{$o->payment_status}}</td><td>{{$o->status}}</td><td>£{{number_format($o->grand_total_pence/100,2)}}</td><td>@if($o->payment_status==='paid')<form method="post" action="{{route('admin.orders.status',$o)}}" class="qtyadd">@csrf<select name="status"><option>processing</option><option>dispatched</option><option>delivered</option></select><button class="btn small">Save</button></form>@endif</td></tr>@endforeach</tbody></table></div>{{$orders->links()}}</section>
+<section class="panel"><h2>Low stock</h2><div class="cards">@foreach($products as $p)<div class="tile"><strong>{{$p->sku}}</strong><p>{{$p->product->name}}</p><h2>{{$p->stock_packs}} cases</h2></div>@endforeach</div></section>
+@endsection

@@ -1,0 +1,8 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+class Payment extends Model {
+ protected $fillable=['order_id','provider','provider_session_id','provider_payment_id','status','amount_pence','metadata'];
+ protected function casts():array{return ['metadata'=>'array'];}
+ public function order(){return $this->belongsTo(Order::class);}
+}

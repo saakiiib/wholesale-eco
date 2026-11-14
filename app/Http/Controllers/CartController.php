@@ -1,0 +1,25 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\ProductVariant;
+use App\Services\PricingService;
+use Illuminate\Http\Request;
+class CartController {
+ public function index(Request $request,PricingService $pricing){
+  $cart=$request->session()->get('cart',[]);$quote=null;$error=null;
+  try{$quote=$pricing->quote($cart,$request->user()?->business_id);}catch(\DomainException $e){$error=$e->getMessage();}
+  return view('shop.cart',compact('quote','error'));
+ }
+ public function add(Request $request){
+  $data=$request->validate(['variant_id'=>'required|integer|exists:product_variants,id','packs'=>'required|integer|min:1|max:10000']);
+  $variant=ProductVariant::findOrFail($data['variant_id']);abort_unless($variant->active,422);
+  $cart=$request->session()->get('cart',[]);$key=(string)$variant->id;
+  $cart[$key]=min(10000,((int)($cart[$key]??0))+$data['packs']);$request->session()->put('cart',$cart);
+  return redirect()->back()->with('success','Added to basket');
+ }
+ public function update(Request $request){
+  $data=$request->validate(['variant_id'=>'required|integer|exists:product_variants,id','packs'=>'required|integer|min:0|max:10000']);
+  $cart=$request->session()->get('cart',[]);$key=(string)$data['variant_id'];
+  if($data['packs']===0)unset($cart[$key]);else $cart[$key]=$data['packs'];
+  $request->session()->put('cart',$cart);return redirect()->route('cart.index');
+ }
+}

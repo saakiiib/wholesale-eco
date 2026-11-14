@@ -1,0 +1,11 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title><?php echo $__env->yieldContent('title','Wholesale Eco Products'); ?></title><link rel="stylesheet" href="<?php echo e(asset('css/shop.css')); ?>"></head>
+<body><div class="topline">Wholesale Eco Products · Bulk supply for UK foodservice businesses</div>
+<header class="sitehead"><div class="wrap nav"><a class="brand" href="<?php echo e(route('home')); ?>"><img src="<?php echo e(asset('design-preview/assets/wholesale-eco-logo.png')); ?>" alt="Wholesale Eco Products"></a>
+<nav><a href="<?php echo e(route('catalogue')); ?>">Shop wholesale</a><a href="<?php echo e(route('cart.index')); ?>">Basket (<?php echo e(count(session('cart',[]))); ?>)</a>
+<?php if(auth()->guard()->check()): ?> <a href="<?php echo e(auth()->user()->isAdmin()?route('admin.dashboard'):route('account.dashboard')); ?>"><?php echo e(auth()->user()->isAdmin()?'Admin':'My account'); ?></a><form method="post" action="<?php echo e(route('logout')); ?>"><?php echo csrf_field(); ?><button class="plain">Log out</button></form>
+<?php else: ?> <a href="<?php echo e(route('login')); ?>">Log in</a><a href="<?php echo e(route('register')); ?>">Trade account</a><?php endif; ?></nav></div></header>
+<main class="wrap"><?php if(session('success')): ?><div class="alert success"><?php echo e(session('success')); ?></div><?php endif; ?>
+<?php if($errors->any()): ?><div class="alert error"><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><div><?php echo e($error); ?></div><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></div><?php endif; ?>
+<?php echo $__env->yieldContent('content'); ?></main><footer class="foot">Wholesale Eco Products · B2B packaging essentials · Prices shown excluding VAT unless stated</footer></body></html>
+<?php /**PATH C:\Users\sakib\Desktop\wholesaleecoproducts\wholesale-eco-laravel\resources\views/layouts/app.blade.php ENDPATH**/ ?>

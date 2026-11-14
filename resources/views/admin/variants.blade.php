@@ -1,0 +1,7 @@
+@extends('layouts.app')
+@section('title','Wholesale inventory and pricing')
+@section('content')<div class="pageintro"><h1>Inventory & wholesale price tiers</h1><p>Stock is counted in cases. Tier prices are integer pence per case.</p></div>
+@foreach($variants as $v)<section class="panel"><div class="panelhead"><div><h2>{{$v->product->name}}</h2><p>{{$v->sku}} · {{$v->label}} · {{$v->units_per_pack}} units per pack</p></div><strong>{{$v->stock_packs}} packs</strong></div><div class="twocol">
+<form class="formgrid" action="{{route('admin.stock',$v)}}" method="post">@csrf<h3>Adjust stock</h3><label>Pack change (negative to remove)<input type="number" name="adjustment" required value="10"></label><label>Reason<input name="note" required value="Stock count"></label><button class="btn small">Save adjustment</button></form>
+<form class="formgrid" action="{{route('admin.tier',$v)}}" method="post">@csrf<h3>Add / update quantity price tier</h3><label>Minimum cases<input type="number" name="min_packs" min="1" required value="4"></label><label>Price per case (pence)<input type="number" name="unit_price_pence" min="1" required value="{{$v->base_pack_price_pence}}"></label><button class="btn small">Save tier</button><small>Existing: @foreach($v->priceTiers as $t){{$t->min_packs}}+ → £{{number_format($t->unit_price_pence/100,2)}}; @endforeach</small></form></div></section>@endforeach
+{{$variants->links()}}@endsection
