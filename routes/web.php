@@ -2,6 +2,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController,AccountPortalController,AdminPortalController,AdminManagementController};
 Route::get('/',[ShopController::class,'home'])->name('home');
+Route::get('/contact',[\App\Http\Controllers\ContactController::class,'show'])->name('contact');
+Route::post('/contact',[\App\Http\Controllers\ContactController::class,'send'])->middleware('throttle:5,1')->name('contact.send');
 Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
 Route::get('/products/{product:slug}',[ShopController::class,'product'])->name('products.show');
 Route::get('/basket',[CartController::class,'index'])->name('cart.index');

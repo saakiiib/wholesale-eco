@@ -32,3 +32,6 @@
 @media(max-width:760px){.admin-site-main .portal-shell{display:block}.admin-site-main .portal-sidebar{display:flex;flex-flow:row wrap}.admin-site-main .portal-page{padding:16px}.admin-hero{display:block;padding:24px}.admin-hero>a{margin-top:18px}.admin-bars{gap:5px}.admin-site-main .portal-topbar{padding:15px}}
 
 .admin-image-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}.admin-image{border:1px solid #e7eee8;border-radius:10px;padding:10px}.admin-image img{width:100%;height:130px;object-fit:contain;background:#f7f8f5}.admin-image p{font-size:11px;color:#64776b;overflow-wrap:anywhere}
+
+/* V7: live-data dashboard enhancements */
+.dashboard-v7-grid{margin-top:2px}.dashboard-v7-note{font-size:11px;color:#71867b;margin:14px 0 0}.dashboard-v7-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dashboard-v7-metrics>div{background:#f2f7f2;padding:17px 12px;border-radius:12px}.dashboard-v7-metrics strong{display:block;font-size:25px;color:#184c38}.dashboard-v7-metrics span{font-size:11px;color:#587266}@media(max-width:620px){.dashboard-v7-metrics{grid-template-columns:1fr}}

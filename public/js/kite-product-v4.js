@@ -28,3 +28,59 @@ document.addEventListener('DOMContentLoaded',()=>{
    document.querySelectorAll('[data-gallery-src]').forEach(b=>b.classList.toggle('is-selected',b===button));
  }));
 });
+
+// V8: highlight only the active volume tier of each SKU, based on its selected pack quantity.
+// Optional pallet ordering converts quantity to packs before server-side checkout pricing.
+document.addEventListener('DOMContentLoaded',()=>{
+ const gbp = new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
+ const rows=[...document.querySelectorAll('.kite-variant-row')];
+ const activeTier=packs=>packs>=20?3:packs>=10?2:packs>=4?1:0;
+ const updateRow=(row)=>{
+  const form=row.querySelector('.kite-quick-add');if(!form)return;
+  const input=form.querySelector('input[name="packs"]');if(!input)return;
+  const perPallet=Math.max(0,Number(row.dataset.packsPerPallet)||0);
+  const kind=form.querySelector('.we-order-unit')?.value||'pack';
+  const factor=kind==='pallet' && row.dataset.allowPallet==='1'?perPallet:1;
+  const ordered=Math.max(1,Number(input.value)||1)*Math.max(1,factor);
+  const tier=activeTier(ordered);
+  row.querySelectorAll('[data-tier-index]').forEach(el=>{
+   const selected=Number(el.dataset.tierIndex)===tier;
+   el.classList.toggle('kite-tier-selected',selected);
+   el.setAttribute('aria-label',selected?'Current quantity price tier':'Other quantity price tier');
+  });
+  form.querySelector('input[name="order_unit"]').value=kind;
+  const unitDisplay=form.querySelector('.we-order-unit');
+  if(unitDisplay){
+    input.max=String(Math.max(1,Math.floor(Math.min(10000,Number(input.dataset.stockPacks)||10000)/Math.max(1,factor))));
+    if(Number(input.value)>Number(input.max))input.value=input.max;
+  }
+  // Display the *actual* price per pack for the selected quantity, using the existing calculated tier prices.
+  const activePrice=row.querySelector('[data-tier-index="'+tier+'"] .kite-tier-price');
+  let hint=row.querySelector('.we-line-preview');
+  if(!hint){hint=document.createElement('small');hint.className='we-line-preview';form.appendChild(hint);}
+  const packPence=Number(activePrice?.dataset.pricePence)||0;
+  hint.textContent=gbp.format(packPence*ordered/100)+' ex VAT · '+ordered+' packs';
+ };
+ rows.forEach(row=>{
+  const input=row.querySelector('input[name="packs"]');
+  if(!input)return;
+  input.dataset.stockPacks=input.max;
+  input.addEventListener('input',()=>updateRow(row));
+  input.addEventListener('change',()=>updateRow(row));
+  row.querySelector('.kite-step-up')?.addEventListener('click',()=>queueMicrotask(()=>updateRow(row)));
+  row.querySelector('.kite-step-down')?.addEventListener('click',()=>queueMicrotask(()=>updateRow(row)));
+  row.querySelector('.we-order-unit')?.addEventListener('change',()=>{input.value='1';updateRow(row);});
+  updateRow(row);
+ });
+ document.querySelectorAll('[data-unit-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+  const mode=btn.dataset.unitMode;
+  document.querySelectorAll('[data-unit-mode]').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',String(b===btn));});
+  document.querySelectorAll('.we-unit-pack').forEach(el=>el.hidden=mode!=='pack');
+  document.querySelectorAll('.we-unit-pallet').forEach(el=>el.hidden=mode!=='pallet');
+  document.querySelectorAll('.we-units-col-title').forEach(el=>el.textContent='Units per '+mode);
+ }));
+ // Unit prices are a display preference controlled by SKU. Disabled items show a neutral dash.
+ document.querySelectorAll('[data-price-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+  if(btn.dataset.priceMode==='unit')document.querySelectorAll('.kite-tier-price[data-unit-enabled="0"]').forEach(el=>el.textContent='—');
+ }));
+});
