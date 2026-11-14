@@ -25,6 +25,13 @@ This is an **installable Laravel application source skeleton with implemented co
 ### Local development
 `composer install && cp .env.example .env && php artisan key:generate && php artisan migrate && php artisan db:seed && php artisan serve`
 
+### Demo accounts (created by `php artisan db:seed` via DemoUsersSeeder)
+- Admin: `admin@example.com` / `admin-demo-password` → `/admin` dashboard
+- Trade customers: `riverside@example.test` and `events@example.test`, both password `demo-password`
+- `suspended@example.test` / `demo-password` is seeded suspended, to demo the admin customer-status toggle.
+
+Override via `.env`: `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD`, `DEMO_USER_PASSWORD`. Demo credentials are intentionally generic — never use them on a live system.
+
 ### How to create an admin safely (example code in artisan tinker)
 `$u = App\Models\User::where('email', 'actual-admin@your-domain.co.uk')->firstOrFail(); $u->update(['role' => 'admin']);`
 Only promote a previously registered, verified, trusted account. This command is **not** a public route.

@@ -1,17 +1,71 @@
 @extends('layouts.app')
 @section('title',$product->name.' — Wholesale Eco Products')
 @section('content')
-<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{route('home')}}">Home</a><span>›</span><a href="{{route('catalogue')}}">Products</a><span>›</span>@if($product->category)<a href="{{route('catalogue',['category'=>$product->category->slug])}}">{{$product->category->name}}</a><span>›</span>@endif<span aria-current="page">{{$product->name}}</span></nav>
 @php
- $gallery=[];
- if($product->image_path){$gallery[]=['src'=>asset('storage/'.$product->image_path),'alt'=>$product->name];}
- foreach($product->images as $image){$gallery[]=['src'=>asset('storage/'.$image->path),'alt'=>$image->alt_text?:$product->name];}
- $catIcon=match($product->category?->slug??''){'cups'=>'cup','bags'=>'bag','boxes'=>'box','napkins'=>'napkin','bowls'=>'bowl',default=>'box'};
+$gallery=[];
+if($product->image_path){$gallery[]=['src'=>asset('storage/'.$product->image_path),'alt'=>$product->name];}
+foreach($product->images as $photo){$gallery[]=['src'=>asset('storage/'.$photo->path),'alt'=>$photo->alt_text?:$product->name];}
+$catIcon=match($product->category?->slug??''){'cups'=>'cup','bags'=>'bag','boxes'=>'box','napkins'=>'napkin','bowls'=>'bowl',default=>'box'};
+$variantRows=$product->variants->sortBy('label')->values();
 @endphp
-<div class="product-overview"><div class="product-gallery"><div class="gallery-main" id="product-main-image">@if(count($gallery))<img id="gallery-active-img" src="{{$gallery[0]['src']}}" alt="{{$gallery[0]['alt']}}">@else<div class="gallery-placeholder"><svg viewBox="0 0 100 100" role="img" aria-label="Illustration for {{$product->name}}"><use href="{{asset('design-preview/assets/products.svg')}}#{{$catIcon}}"/></svg><span>Product photography coming soon</span></div>@endif</div><div class="gallery-thumbnails">@foreach($gallery as $index=>$photo)<button type="button" class="gallery-thumb {{$index===0?'is-selected':''}}" data-gallery-src="{{$photo['src']}}" data-gallery-alt="{{$photo['alt']}}" aria-label="Show image {{ $index+1 }}"><img src="{{$photo['src']}}" alt=""></button>@endforeach@if(!count($gallery))<div class="gallery-help">Additional product images will appear here when uploaded by admin.</div>@endif</div></div>
-<div class="product-description"><span class="eyebrow">WHOLESALE PRODUCT DETAILS</span><h1>{{$product->name}}</h1><p class="product-desc-text">{{$product->description ?: 'Professional wholesale foodservice packaging. Select a case option below to order.'}}</p><div class="product-specs"><div><span>Category</span><strong>{{$product->category?->name??'Packaging'}}</strong></div><div><span>Available options</span><strong>{{$product->variants->count()}} {{ $product->variants->count()===1?'variant':'variants' }}</strong></div><div><span>Supply type</span><strong>Wholesale cases</strong></div><div><span>Pricing</span><strong>Excluding VAT</strong></div></div><div class="product-description-note">✓ Volume pricing where available &nbsp; ✓ Easy basket checkout &nbsp; ✓ Reorder from your account</div><a href="#order-options" class="btn">View prices &amp; order cases ↓</a></div></div>
-<section class="product-options" id="order-options"><div class="section-head"><div><span class="eyebrow">CASE SIZES & PRICING</span><h2>Choose your wholesale quantity</h2><p>Prices shown per case, excluding VAT. Discounts are applied at checkout.</p></div></div><div class="table-scroll"><table class="variant-table"><thead><tr><th>Product / SKU</th><th>Units per case</th><th>1–3 cases</th><th>4–9 cases</th><th>10–19 cases</th><th>20+ cases</th><th>Availability</th><th>Order</th></tr></thead><tbody>@forelse($product->variants as $v)@php
-$prices=[];foreach([1,4,10,20] as $qty){$price=$v->base_pack_price_pence;foreach($v->priceTiers as $tier){if($qty >= $tier->min_packs){$price=$tier->unit_price_pence;break;}}$prices[]=$price;}
-@endphp<tr><td><strong>{{$v->label}}</strong><small>SKU: {{$v->sku}}</small></td><td>{{$v->units_per_pack}}</td>@foreach($prices as $price)<td><strong>£{{number_format($price/100,2)}}</strong></td>@endforeach<td><span class="stock-label {{$v->stock_packs>0?'in-stock':'out-stock'}}">{{$v->stock_packs>0?'In stock':'Out of stock'}}</span></td><td><form method="post" action="{{route('cart.add')}}" class="qtyadd">@csrf<input type="hidden" name="variant_id" value="{{$v->id}}"><label class="sr-only" for="product-qty-{{$v->id}}">Number of cases for {{$v->sku}}</label><input id="product-qty-{{$v->id}}" type="number" name="packs" min="1" max="10000" value="1"><button class="btn small" @disabled($v->stock_packs===0)>Add to basket</button></form></td></tr>@empty<tr><td colspan="8">No active purchasing options are available.</td></tr>@endforelse</tbody></table></div></section>
-<section class="extra-product-info"><div><h3>Product information</h3><p>{{$product->description ?: 'Contact the supplier for full product dimensions, composition and usage instructions.'}}</p></div><div><h3>Ordering support</h3><p>Check case quantities and volume prices above. Your basket calculates your current order total before payment.</p></div><div><h3>Need regular supplies?</h3><p><a href="{{route('register')}}">Create a free trade account</a> to view past orders and quickly reorder.</p></div></section>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{route('home')}}">Home</a><span>›</span><a href="{{route('catalogue')}}">All products</a><span>›</span>@if($product->category)<a href="{{route('catalogue',['category'=>$product->category->slug])}}">{{$product->category->name}}</a><span>›</span>@endif<strong>{{$product->name}}</strong></nav>
+<div class="kite-product-shell">
+ <aside class="kite-sidebar" aria-label="Product categories">
+  <div class="kite-side-title">Browse packaging <span>↗</span></div>
+  @foreach($sidebarCategories as $category)
+   <a href="{{route('catalogue',['category'=>$category->slug])}}" class="{{($product->category_id===$category->id)?'active':''}}"><span class="side-arrow">›</span>{{$category->name}}</a>
+  @endforeach
+  <div class="kite-side-help"><strong>Need a regular supply?</strong><p>Open a trade account to track orders and reorder essentials.</p><a href="{{route('register')}}">Create account →</a></div>
+ </aside>
+ <div class="kite-product-main">
+  <header class="kite-pageheading"><div><span class="eyebrow">PRODUCT RANGE</span><h1>{{$product->name}}</h1><p>Compare product options, specifications and case prices in one place.</p></div><div class="kite-count">{{ $variantRows->count() }} purchasing {{ $variantRows->count()===1?'option':'options' }}</div></header>
+  <section class="kite-overview" aria-label="Product gallery, description and filters">
+   <div class="kite-gallery"><div class="kite-image-stage" id="product-main-image">
+     @if(count($gallery))<img id="gallery-active-img" src="{{$gallery[0]['src']}}" alt="{{$gallery[0]['alt']}}">@else<div class="kite-product-art"><svg viewBox="0 0 100 100" role="img" aria-label="Illustration of {{$product->name}}"><use href="{{asset('design-preview/assets/products.svg')}}#{{$catIcon}}"/></svg></div>@endif
+    </div>
+    @if(count($gallery)>1)<div class="kite-photo-thumbs">@foreach($gallery as $i=>$photo)<button type="button" class="gallery-thumb {{$i===0?'is-selected':''}}" data-gallery-src="{{$photo['src']}}" data-gallery-alt="{{$photo['alt']}}" aria-label="Display image {{$i+1}}"><img src="{{$photo['src']}}" alt=""></button>@endforeach</div>@endif
+    <div class="kite-gallery-caption">Product imagery &amp; details</div>
+   </div>
+   <div class="kite-product-info">
+    <div class="kite-intro-title">About this product</div>
+    <p class="kite-lead">{{$product->description ?: 'Wholesale packaging for restaurants, takeaways and cafés. Compare variants below for available options, pack sizes and bulk savings.'}}</p>
+    <ul class="kite-selling-points"><li>Business-focused case ordering with clear quantities</li><li>Compare available sizes and purchasing options</li><li>Automatic tier pricing where configured</li><li>Secure basket and delivery checkout</li></ul>
+    <div class="kite-overview-meta"><span><strong>Category</strong> {{$product->category?->name??'Packaging'}}</span><span><strong>Pricing</strong> GBP, excluding VAT</span><span><strong>Available SKUs</strong> {{$variantRows->count()}}</span></div>
+    <div class="kite-filter-panel"><div class="kite-filter-head"><div><strong>Find the right option</strong><small>Filter the variants below</small></div><button type="button" id="kite-clear-filters">Reset filters ↺</button></div>
+     <label class="kite-search-label" for="kite-variant-search">Search size, colour, description or SKU</label><input id="kite-variant-search" class="kite-search" type="search" placeholder="e.g. brown, medium, 12oz, SKU…" autocomplete="off">
+     <div class="kite-filter-note">Use the table below to compare wholesale prices and select a case quantity.</div>
+    </div>
+   </div>
+  </section>
+  <div class="kite-tabbar"><a class="active" href="#kite-order-matrix">▦ &nbsp;Products &amp; prices</a><a href="#kite-product-details">ⓘ &nbsp;About this range</a><a href="#kite-related-info">↗ &nbsp;Ordering help</a></div>
+  <section id="kite-order-matrix" class="kite-order-section" aria-labelledby="kite-table-title">
+   <div class="kite-order-title"><div><span class="eyebrow">WHOLESALE PRICE MATRIX</span><h2 id="kite-table-title">Choose your packaging options</h2><p>Price tiers apply per SKU. Prices shown exclude VAT. Add any quantity of cases to your basket.</p></div><div class="kite-price-switch"><span>Show price per</span><div class="kite-switch" role="group" aria-label="Display prices by case or unit"><button type="button" class="active" data-price-mode="case" aria-pressed="true">Case</button><button type="button" data-price-mode="unit" aria-pressed="false">Unit</button></div></div></div>
+   <div class="kite-matrix-scroller"><table class="kite-matrix"><thead><tr class="kite-matrix-super"><th rowspan="2" class="kite-desc-col">Product / specification</th><th rowspan="2">Units per case</th><th colspan="4">Wholesale prices · <span class="kite-price-unit-title">per case</span></th><th rowspan="2">Stock</th><th rowspan="2">Order cases</th></tr><tr class="kite-matrix-sub"><th>1–3<br><small>cases</small></th><th>4–9<br><small>cases</small></th><th>10–19<br><small>cases</small></th><th>20+<br><small>cases</small></th></tr></thead><tbody>
+    @forelse($variantRows as $v)
+     @php
+      $prices=[];
+      foreach([1,4,10,20] as $quantity){
+       $applicable=$v->priceTiers->where('min_packs','<=',$quantity)->sortByDesc('min_packs')->first();
+       $prices[]=$applicable ? (int)$applicable->unit_price_pence : (int)$v->base_pack_price_pence;
+      }
+      $attr=$v->attributes??[];
+      $labelInfo=is_array($attr)?collect($attr)->map(fn($value,$key)=>is_scalar($value)?$key.': '.$value:'')->filter()->implode(' · '):'';
+     @endphp
+     <tr class="kite-variant-row" data-variant-search="{{strtolower($v->label.' '.$v->sku.' '.$labelInfo)}}">
+      <td class="kite-description-cell"><div class="kite-variant-flex"><div class="kite-variant-mini">@if(count($gallery))<img src="{{$gallery[0]['src']}}" alt="">@else<svg viewBox="0 0 100 100" aria-hidden="true"><use href="{{asset('design-preview/assets/products.svg')}}#{{$catIcon}}"/></svg>@endif</div><div><strong>{{$v->label}}</strong><small>SKU: {{$v->sku}}</small>@if($labelInfo)<small>{{$labelInfo}}</small>@endif</div></div></td>
+      <td class="kite-pack-count"><strong>{{number_format($v->units_per_pack)}}</strong><small>units / case</small></td>
+      @foreach($prices as $index=>$price)<td class="kite-price-cell {{$index===1?'kite-tier-highlight':''}}"><strong class="kite-tier-price" data-price-pence="{{$price}}" data-units="{{$v->units_per_pack}}">£{{number_format($price/100,2)}}</strong>@if($index>0 && $price<$prices[0])<small class="kite-save-pill">Save {{round((1-$price/max(1,$prices[0]))*100)}}%</small>@endif</td>@endforeach
+      <td><span class="stock-label {{$v->stock_packs>0?'in-stock':'out-stock'}}">{{$v->stock_packs>0?'In stock':'Out of stock'}}</span>@if($v->stock_packs>0)<small>{{$v->stock_packs}} cases</small>@endif</td>
+      <td class="kite-order-cell"><form method="post" action="{{route('cart.add')}}" class="kite-quick-add">@csrf<input type="hidden" name="variant_id" value="{{$v->id}}"><div class="kite-stepper"><button type="button" class="kite-step-down" aria-label="Decrease cases">−</button><input type="number" name="packs" value="1" min="1" max="{{max(1,min(10000,$v->stock_packs))}}" aria-label="Cases of {{$v->label}}" inputmode="numeric"><button type="button" class="kite-step-up" aria-label="Increase cases">+</button></div><button class="kite-add-button" @disabled($v->stock_packs<=0)>Add <span aria-hidden="true">↗</span></button></form></td>
+     </tr>
+    @empty<tr><td colspan="8" class="kite-empty-table">No active product variants are available yet.</td></tr>@endforelse
+    <tr id="kite-no-results" hidden><td colspan="8">No matching product options. <button type="button" id="kite-reset-inline">Clear the search</button>.</td></tr>
+   </tbody></table></div>
+   <div class="kite-table-foot"><span>✓ Secure business checkout</span><span>✓ Pack prices calculated at checkout</span><span>ⓘ Pallet &amp; Mix &amp; Match discounts: coming in a later release</span></div>
+  </section>
+  <section class="kite-bottom-cards" id="kite-product-details"><div><h3>Product information</h3><p>{{$product->description ?: 'Please contact our team if you need dimensions, material specifications or packaging suitability details.'}}</p></div><div id="kite-related-info"><h3>Need help ordering?</h3><p>Select a quantity of cases in the table and add it to the basket. Review VAT and delivery costs at checkout.</p><a href="{{route('cart.index')}}">View basket →</a></div><div><h3>Make restocking easier</h3><p>Create a trade account to follow your orders, save purchasing lists and quickly reorder supplies.</p><a href="{{route('register')}}">Create a trade account →</a></div></section>
+ </div>
+</div>
+@push('styles')<link rel="stylesheet" href="{{asset('css/kite-product-v4.css')}}">@endpush
+@push('scripts')<script src="{{asset('js/kite-product-v4.js')}}" defer></script>@endpush
 @endsection

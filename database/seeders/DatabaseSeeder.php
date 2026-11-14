@@ -22,6 +22,6 @@ class DatabaseSeeder extends Seeder {
     foreach([4=>95,10=>90,20=>85] as $min=>$pct){PriceTier::updateOrCreate(['product_variant_id'=>$variant->id,'min_packs'=>$min],['unit_price_pence'=>(int)round($price*$pct/100)]);}
    }
   }
-  // No hard-coded or publicly known admin password. Use artisan tinker to provision administrator.
+  $this->call(DemoUsersSeeder::class); // demo admin/customer accounts — see .env (DEMO_ADMIN_*, DEMO_USER_PASSWORD)
  }
 }

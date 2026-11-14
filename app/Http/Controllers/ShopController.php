@@ -16,6 +16,7 @@ class ShopController {
  public function product(Product $product){
   abort_unless($product->active,404);
   $product->load(['category','images','variants'=>fn($q)=>$q->where('active',true)->with('priceTiers')]);
-  return view('shop.product',compact('product'));
+  $sidebarCategories=Category::where('active',true)->orderBy('sort_order')->get();
+  return view('shop.product',compact('product','sidebarCategories'));
  }
 }
