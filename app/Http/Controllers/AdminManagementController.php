@@ -50,7 +50,29 @@ class AdminManagementController {
  }
  public function auditLog(Request $r){$logs=DB::table('audit_logs')->leftJoin('users','users.id','=','audit_logs.user_id')->select('audit_logs.*','users.name as actor')->orderByDesc('audit_logs.id')->paginate(35);return view('portal.admin.audit',compact('logs'));}
  public function images(Product $product){return view('portal.admin.images',['product'=>$product->load('images')]);}
- public function addImage(Request $r,Product $product){$d=$r->validate(['image'=>'required|image|mimes:jpg,jpeg,png,webp|max:4096','alt_text'=>'nullable|string|max:180']);$path=$r->file('image')->store('products','public');$img=$product->images()->create(['path'=>$path,'alt_text'=>$d['alt_text']??$product->name,'sort_order'=>(int)$product->images()->max('sort_order')+1]);$this->audit($r,'product.image.added','product_image',$img->id,['product_id'=>$product->id]);return back()->with('success','Image uploaded.');}
+ public function addImage(Request $r,Product $product){
+  $d=$r->validate(['images'=>'required|array|min:1|max:8','images.*'=>'required|image|mimes:jpg,jpeg,png,webp|max:4096','alt_text'=>'nullable|string|max:180']);
+  $sort=(int)$product->images()->max('sort_order');
+  foreach($r->file('images',[]) as $file){
+   $path=$file->store('products','public');
+   $img=$product->images()->create(['path'=>$path,'alt_text'=>$d['alt_text']??$product->name,'sort_order'=>++$sort]);
+   $this->audit($r,'product.image.added','product_image',$img->id,['product_id'=>$product->id]);
+  }
+  return back()->with('success',count($r->file('images',[])).' image(s) uploaded.');
+ }
+ public function moveImage(Request $r,Product $product,\App\Models\ProductImage $image){
+  abort_unless((int)$image->product_id===(int)$product->id,404);
+  $d=$r->validate(['direction'=>'required|in:up,down']);
+  $ordered=$product->images()->orderBy('sort_order')->orderBy('id')->get();
+  $idx=$ordered->search(fn($item)=>$item->id===$image->id);
+  $other=$d['direction']==='up'?$idx-1:$idx+1;
+  if($idx!==false && $other>=0 && $other<$ordered->count()){
+   $ordered->splice($other,0,$ordered->splice($idx,1)->all());
+   \Illuminate\Support\Facades\DB::transaction(function()use($ordered){foreach($ordered as $i=>$photo){$photo->update(['sort_order'=>$i+1]);}});
+   $this->audit($r,'product.image.reordered','product_image',$image->id,['product_id'=>$product->id]);
+  }
+  return back()->with('success','Gallery order updated.');
+ }
  public function removeImage(Request $r,Product $product,\App\Models\ProductImage $image){abort_unless($image->product_id===$product->id,404);$path=$image->path;$this->audit($r,'product.image.removed','product_image',$image->id,['product_id'=>$product->id]);$image->delete();\Illuminate\Support\Facades\Storage::disk('public')->delete($path);return back()->with('success','Image removed.');}
  public function updateCustomer(Request $r,\App\Models\Business $business){$d=$r->validate(['name'=>'required|string|max:200','trading_name'=>'nullable|string|max:200','vat_number'=>'nullable|string|max:60','phone'=>'nullable|string|max:35','status'=>'required|in:active,suspended']);$business->update($d);$this->audit($r,'customer.updated','business',$business->id,array_keys($d));return back()->with('success','Trade customer details updated.');}
  public function editCategory(\App\Models\Category $category){return view('portal.admin.category-edit',['category'=>$category,'categories'=>\App\Models\Category::where('id','!=',$category->id)->orderBy('name')->get()]);}

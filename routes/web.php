@@ -5,6 +5,15 @@ Route::get('/',[ShopController::class,'home'])->name('home');
 Route::get('/contact',[\App\Http\Controllers\ContactController::class,'show'])->name('contact');
 Route::view('/cookies','shop.cookies')->name('cookies');
 Route::post('/contact',[\App\Http\Controllers\ContactController::class,'send'])->middleware('throttle:5,1')->name('contact.send');
+Route::get('/sitemap.xml',function(){
+ $urls=collect([route('home'),route('catalogue'),route('contact')]);
+ $urls=$urls->concat(\App\Models\Category::where('active',true)->pluck('slug')->map(fn($slug)=>route('catalogue',['category'=>$slug])));
+ $urls=$urls->concat(\App\Models\Product::where('active',true)->pluck('slug')->map(fn($slug)=>route('products.show',['product'=>$slug])));
+ $xml='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+ foreach($urls as $url){$xml.='<url><loc>'.htmlspecialchars($url,ENT_XML1,'UTF-8').'</loc></url>';}
+ return response($xml.'</urlset>',200,['Content-Type'=>'application/xml; charset=UTF-8']);
+})->name('sitemap');
+Route::get('/robots.txt',function(){return response("User-agent: *\nDisallow: /admin\nDisallow: /account\nDisallow: /checkout\nDisallow: /basket\nSitemap: ".route('sitemap')."\n",200,['Content-Type'=>'text/plain; charset=UTF-8']);});
 Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
 Route::get('/products/{product:slug}',[ShopController::class,'product'])->name('products.show');
 Route::get('/basket',[CartController::class,'index'])->name('cart.index');
@@ -17,9 +26,9 @@ Route::get('/checkout/success/{token}',[CheckoutController::class,'success'])->n
 Route::get('/checkout/cancel/{token}',[CheckoutController::class,'cancel'])->name('checkout.cancel');
 Route::post('/stripe/webhook',StripeWebhookController::class)->name('stripe.webhook');
 Route::get('/login',[AuthController::class,'form'])->name('login');
-Route::post('/login',[AuthController::class,'login'])->name('login.submit');
+Route::post('/login',[AuthController::class,'login'])->middleware('throttle:10,1')->name('login.submit');
 Route::get('/register',[AuthController::class,'registerForm'])->name('register');
-Route::post('/register',[AuthController::class,'register'])->name('register.submit');
+Route::post('/register',[AuthController::class,'register'])->middleware('throttle:5,1')->name('register.submit');
 Route::post('/logout',[AuthController::class,'logout'])->middleware('auth')->name('logout');
 Route::middleware(['auth','active-business'])->prefix('account')->name('account.')->group(function(){
  Route::get('/',[AccountPortalController::class,'dashboard'])->name('dashboard');
@@ -78,6 +87,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::put('/coupons/{coupon}',[\App\Http\Controllers\AdminCouponsController::class,'update'])->name('coupons.update');
  Route::get('/products/{product}/images',[AdminManagementController::class,'images'])->name('images.index');
  Route::post('/products/{product}/images',[AdminManagementController::class,'addImage'])->name('images.store');
+ Route::post('/products/{product}/images/{image}/move',[AdminManagementController::class,'moveImage'])->name('images.move');
  Route::delete('/products/{product}/images/{image}',[AdminManagementController::class,'removeImage'])->name('images.destroy');
  Route::put('/customers/{business}/details',[AdminManagementController::class,'updateCustomer'])->name('customers.details');
  Route::get('/categories/{category}/edit',[AdminManagementController::class,'editCategory'])->name('categories.edit');
