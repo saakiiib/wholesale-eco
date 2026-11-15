@@ -5,7 +5,7 @@
  $isPaid=$order->payment_status==='paid';
  $isTaxInvoice=$isPaid&&$vatRegistered;
  $documentTitle=$isTaxInvoice?'DRAFT VAT INVOICE':($isPaid?'PAID ORDER RECEIPT':'ORDER STATEMENT');
- $invoiceNo='WEP-'.$order->order_number;
+ $invoiceNo=str_starts_with($order->order_number,'WEP-')?$order->order_number:'WEP-'.$order->order_number;
  $businessAddress=$settings['business_address']??'Business address to be configured';
 @endphp
 <div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div>

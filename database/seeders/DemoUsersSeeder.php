@@ -7,11 +7,13 @@ class DemoUsersSeeder extends Seeder {
  public function run():void {
   // DEMO ONLY — never run this seeder in production.
   // Passwords rely on the User model's 'hashed' cast.
-  User::updateOrCreate(['email'=>'admin@example.com'],[
+  $adminEmail = env('DEMO_ADMIN_EMAIL', 'admin@example.com');
+  $adminPassword = env('DEMO_ADMIN_PASSWORD', 'admin-demo-password');
+  User::updateOrCreate(['email'=>$adminEmail],[
    'name'=>'Demo Admin',
-   'password'=>'admin-demo-password',
+   'password'=>$adminPassword,
    'role'=>'admin','business_id'=>null,'email_verified_at'=>now()]);
-  $userPass='demo-password';
+  $userPass = env('DEMO_USER_PASSWORD', 'demo-password');
   $this->demoBusiness('Riverside Café Ltd','riverside@example.test','12 Boat Lane','Bristol','BS1 4TZ',$userPass);
   $this->demoBusiness('Green Events Catering','events@example.test','88 Festival Road','Manchester','M1 1AA',$userPass);
   // Suspended trade account to demo the admin customer-status toggle; it cannot log in while suspended.

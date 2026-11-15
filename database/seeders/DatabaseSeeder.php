@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder {
    }
   }
   $this->call([
+   DemoStoreSettingsSeeder::class,
    DemoUsersSeeder::class,
    SupplierKraftRangeSeeder::class,
   ]);
