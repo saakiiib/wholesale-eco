@@ -41,7 +41,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   const perPallet=Math.max(0,Number(row.dataset.packsPerPallet)||0);
   const kind=form.querySelector('.we-order-unit')?.value||'pack';
   const factor=kind==='pallet' && row.dataset.allowPallet==='1'?perPallet:1;
-  const ordered=Math.max(1,Number(input.value)||1)*Math.max(1,factor);
+  const raw=Math.min(Number(input.max)||10000,Math.max(1,Number(input.value)||1));
+  const ordered=raw*Math.max(1,factor);
   const tier=activeTier(ordered);
   row.querySelectorAll('[data-tier-index]').forEach(el=>{
    const selected=Number(el.dataset.tierIndex)===tier;
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const unitDisplay=form.querySelector('.we-order-unit');
   if(unitDisplay){
     input.max=String(Math.max(1,Math.floor(Math.min(10000,Number(input.dataset.stockPacks)||10000)/Math.max(1,factor))));
-    if(Number(input.value)>Number(input.max))input.value=input.max;
+    if(Number(input.value)>Number(input.max)){input.value=input.max;return updateRow(row);}
   }
   // Display the *actual* price per pack for the selected quantity, using the existing calculated tier prices.
   const activePrice=row.querySelector('[data-tier-index="'+tier+'"] .kite-tier-price');

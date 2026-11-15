@@ -22,4 +22,8 @@ class AccountPortalController {
  public function deleteAddress(Request $r,Address $address){$b=$this->company($r);abort_unless($address->business_id===$b->id,403);DB::transaction(function()use($address,$b){$wasDefault=$address->is_default;$address->delete();if($wasDefault){$next=Address::where('business_id',$b->id)->orderBy('id')->first();$next?->update(['is_default'=>true]);}});return back()->with('success','Address removed.');}
  public function profile(Request $r){return view('portal.customer.profile',['business'=>$this->company($r)]);}
  public function updateProfile(Request $r){$data=$r->validate(['name'=>'required|string|max:150','business_name'=>'required|string|max:200','trading_name'=>'nullable|string|max:200','phone'=>'nullable|string|max:40','vat_number'=>'nullable|string|max:40']);$b=$this->company($r);DB::transaction(function()use($r,$b,$data){$r->user()->update(['name'=>$data['name']]);$b->update(['name'=>$data['business_name'],'trading_name'=>$data['trading_name']??null,'phone'=>$data['phone']??null,'vat_number'=>$data['vat_number']??null]);});return back()->with('success','Trade profile updated.');}
+ public function invoice(Request $r,Order $order){
+  $this->ownedOrder($r,$order);
+  return view('portal.invoice',['order'=>$order->load('items'),'settings'=>\App\Models\StoreSetting::pluck('value','key')]);
+ }
 }

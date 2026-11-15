@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{ShopController,CartController,CheckoutController,AuthController,AccountController,AdminController,StripeWebhookController,AccountPortalController,AdminPortalController,AdminManagementController};
 Route::get('/',[ShopController::class,'home'])->name('home');
 Route::get('/contact',[\App\Http\Controllers\ContactController::class,'show'])->name('contact');
+Route::view('/cookies','shop.cookies')->name('cookies');
 Route::post('/contact',[\App\Http\Controllers\ContactController::class,'send'])->middleware('throttle:5,1')->name('contact.send');
 Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
 Route::get('/products/{product:slug}',[ShopController::class,'product'])->name('products.show');
@@ -38,6 +39,7 @@ Route::middleware(['auth','active-business'])->prefix('account')->name('account.
  Route::get('/orders',[AccountPortalController::class,'orders'])->name('orders.index');
  Route::get('/orders/{order}',[AccountPortalController::class,'order'])->name('orders.show');
  Route::get('/orders/{order}/print',[AccountPortalController::class,'orderPrint'])->name('orders.print');
+ Route::get('/orders/{order}/invoice',[AccountPortalController::class,'invoice'])->name('orders.invoice');
  Route::get('/saved-lists',[AccountPortalController::class,'lists'])->name('lists.index');
  Route::delete('/saved-lists/{list}',[AccountPortalController::class,'deleteList'])->name('lists.destroy');
  Route::get('/addresses',[AccountPortalController::class,'addresses'])->name('addresses.index');
@@ -62,6 +64,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::put('/customers/{business}/status',[AdminPortalController::class,'customerStatus'])->name('customers.status');
  Route::get('/orders',[AdminPortalController::class,'orders'])->name('orders.index');
  Route::get('/orders/{order}',[AdminPortalController::class,'order'])->name('orders.show');
+ Route::get('/orders/{order}/invoice',[\App\Http\Controllers\AdminInvoiceController::class,'show'])->name('orders.invoice');
  Route::get('/reports',[AdminPortalController::class,'reports'])->name('reports');
 });
 
@@ -86,6 +89,10 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::get('/seo',[AdminManagementController::class,'seo'])->name('seo.index');
  Route::put('/seo',[AdminManagementController::class,'saveSeo'])->name('seo.update');
  Route::get('/team',[AdminManagementController::class,'team'])->name('team.index');
+ Route::get('/roles',[\App\Http\Controllers\AdminRolesController::class,'index'])->name('roles.index');
+ Route::post('/roles',[\App\Http\Controllers\AdminRolesController::class,'save'])->name('roles.store');
+ Route::put('/roles/{role}',[\App\Http\Controllers\AdminRolesController::class,'save'])->name('roles.update');
+ Route::put('/team/{user}/role',[\App\Http\Controllers\AdminRolesController::class,'assign'])->name('team.assign');
  Route::post('/team',[AdminManagementController::class,'createTeam'])->name('team.store');
  Route::put('/team/{user}',[AdminManagementController::class,'updateTeam'])->name('team.update');
  Route::get('/audit-log',[AdminManagementController::class,'auditLog'])->name('audit.index');

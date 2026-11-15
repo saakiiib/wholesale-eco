@@ -19,7 +19,7 @@
   <a class="{{request()->routeIs('admin.content.*')?'active':''}}" href="{{route('admin.content.index')}}">▧ &nbsp; Content Management</a>
   <a class="{{request()->routeIs('admin.seo.*')?'active':''}}" href="{{route('admin.seo.index')}}">⌕ &nbsp; SEO Management</a>
   <div class="portal-navlabel">MORE</div>
-  <a class="{{request()->routeIs('admin.team.*')?'active':''}}" href="{{route('admin.team.index')}}">♧ &nbsp; Team &amp; Permissions</a>
+  <a class="{{request()->routeIs('admin.team.*','admin.roles.*')?'active':''}}" href="{{route('admin.team.index')}}">♧ &nbsp; Team &amp; Permissions</a>
   <a class="{{request()->routeIs('admin.audit.*')?'active':''}}" href="{{route('admin.audit.index')}}">◷ &nbsp; Activity History</a>
  @else
   <div class="portal-navlabel">YOUR WORKSPACE</div>

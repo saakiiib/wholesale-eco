@@ -5,6 +5,10 @@ use Illuminate\Support\Facades\DB;
 use App\Models\{Category,Product,ProductVariant,PriceTier,Business,User};
 class DatabaseSeeder extends Seeder {
  public function run():void {
+  if (!filter_var(env('ENABLE_DEMO_SEEDER',false),FILTER_VALIDATE_BOOLEAN)) {
+   $this->command?->warn('Demo seed skipped. To import verified supplier items use SupplierKraftRangeSeeder explicitly.');
+   return;
+  }
   $catalog=[
    ['Cups & Lids','cups',[['12oz Double Wall Kraft Coffee Cups','CUP-12-DW',1000,4600],['12oz Coffee Cup Lids','LID-12-BLK',1000,2800]]],
    ['Food Packaging','boxes',[['Kraft Burger Boxes','BOX-BURGER',200,3400],['Kraft Takeaway Containers','BOX-750ML',300,4200]]],
