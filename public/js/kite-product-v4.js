@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    document.querySelectorAll('.kite-tier-price').forEach(el=>{const price=Number(el.dataset.pricePence);const units=Math.max(1,Number(el.dataset.units));el.textContent=mode==='case'?gbp.format(price/100):(pence(price/units).toFixed(1)+'p');});
    document.querySelectorAll('.kite-price-unit-title').forEach(el=>el.textContent=mode==='case'?'per case':'per unit');
  }));
- document.querySelectorAll('.kite-stepper').forEach(stepper=>{const input=stepper.querySelector('input'); const adjust=(delta)=>{const min=Number(input.min)||1;const max=Number(input.max)||10000;input.value=String(Math.min(max,Math.max(min,(Number(input.value)||min)+delta)));};stepper.querySelector('.kite-step-up')?.addEventListener('click',()=>adjust(1));stepper.querySelector('.kite-step-down')?.addEventListener('click',()=>adjust(-1));});
+ document.querySelectorAll('.kite-stepper').forEach(stepper=>{const input=stepper.querySelector('input'); const adjust=(delta)=>{const min=Number(input.min)||1;const max=Number(input.max)||10000;input.value=String(Math.min(max,Math.max(min,(Number(input.value)||min)+delta)));input.dispatchEvent(new Event('input',{bubbles:true}));};stepper.querySelector('.kite-step-up')?.addEventListener('click',()=>adjust(1));stepper.querySelector('.kite-step-down')?.addEventListener('click',()=>adjust(-1));});
 });
 
 // Gallery thumbnails are shared by product and category range pages.
@@ -49,27 +49,30 @@ document.addEventListener('DOMContentLoaded',()=>{
    el.classList.toggle('kite-tier-selected',selected);
    el.setAttribute('aria-label',selected?'Current quantity price tier':'Other quantity price tier');
   });
-  form.querySelector('input[name="order_unit"]').value=kind;
+  const unitField=form.querySelector('input[name="order_unit"]');if(unitField)unitField.value=kind;
   const unitDisplay=form.querySelector('.we-order-unit');
-  if(unitDisplay){
-    input.max=String(Math.max(1,Math.floor(Math.min(10000,Number(input.dataset.stockPacks)||10000)/Math.max(1,factor))));
-    if(Number(input.value)>Number(input.max)){input.value=input.max;return updateRow(row);}
-  }
+  // Quantity selection is a quote preview. Never silently force out-of-stock products back to 1,
+  // or customers cannot see the higher price tiers. Server-side cart validation remains authoritative.
+  const actualStock=Math.max(0,Number(input.dataset.stockPacks)||0);
+  const purchasable=actualStock>=ordered && ordered<=10000 && actualStock>0;
+  const addButton=form.querySelector('.kite-add-button');
+  if(addButton){addButton.disabled=!purchasable;addButton.title=purchasable?'Add to basket':'Requested quantity exceeds available stock';}
+  row.classList.toggle('kite-out-of-stock-request',!purchasable);
+
   // Display the *actual* price per pack for the selected quantity, using the existing calculated tier prices.
   const activePrice=row.querySelector('[data-tier-index="'+tier+'"] .kite-tier-price');
   let hint=row.querySelector('.we-line-preview');
   if(!hint){hint=document.createElement('small');hint.className='we-line-preview';form.appendChild(hint);}
   const packPence=Number(activePrice?.dataset.pricePence)||0;
-  hint.textContent=gbp.format(packPence*ordered/100)+' ex VAT · '+ordered+' packs';
+  hint.textContent=gbp.format(packPence*ordered/100)+' ex VAT · '+ordered+' packs'+(!purchasable?' · Not available for ordering':'');
  };
  rows.forEach(row=>{
   const input=row.querySelector('input[name="packs"]');
   if(!input)return;
-  input.dataset.stockPacks=input.max;
+  input.dataset.stockPacks=input.getAttribute('data-stock-packs')||'0';
   input.addEventListener('input',()=>updateRow(row));
   input.addEventListener('change',()=>updateRow(row));
-  row.querySelector('.kite-step-up')?.addEventListener('click',()=>queueMicrotask(()=>updateRow(row)));
-  row.querySelector('.kite-step-down')?.addEventListener('click',()=>queueMicrotask(()=>updateRow(row)));
+
   row.querySelector('.we-order-unit')?.addEventListener('change',()=>{input.value='1';updateRow(row);});
   updateRow(row);
  });

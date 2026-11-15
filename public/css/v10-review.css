@@ -1,0 +1,14 @@
+/* V10: true edge-to-edge banner even inside a centred content wrapper */
+body{overflow-x:clip}
+.site-main>.eco-hero-bleed{position:relative;left:50%;width:100vw;max-width:none;margin:0 0 36px;transform:translateX(-50%);background:#edf4ea;border-radius:0;overflow:hidden}
+.site-main>.eco-hero-bleed .eco-hero-inner{width:min(100% - 48px,1320px);max-width:1320px;min-height:520px;margin:0 auto;padding:65px 24px;box-sizing:border-box;background:transparent;border-radius:0}
+.v10-range-specs{background:#f3f8f0;border-radius:12px;padding:15px 18px;margin:15px 0 10px;color:#244b37}
+.v10-range-specs dl{display:grid;gap:8px;margin:12px 0 0}.v10-range-specs dl>div{display:grid;grid-template-columns:110px 1fr;gap:12px;font-size:13px}.v10-range-specs dt{font-weight:800}.v10-range-specs dd{margin:0}
+.kite-description-cell .kite-variant-flex>div:last-child{min-width:0}.kite-description-cell strong,.kite-description-cell small{overflow-wrap:anywhere}
+.kite-matrix .kite-price-cell.kite-tier-selected{background:#d6ecc7!important;box-shadow:inset 0 0 0 2px #55a045!important}
+.v10-admin-jump{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px}.v10-admin-jump a{border:1px solid #bcd6c4;border-radius:9px;padding:11px 14px;color:#155f3e;text-decoration:none;font-weight:750;background:#f5faf5}
+.premium-footer .footer-grid{grid-template-columns:minmax(220px,1.2fr) repeat(3,minmax(125px,1fr));gap:clamp(18px,3vw,55px);align-items:start}
+.premium-footer .footer-about{max-width:340px}.premium-footer .footer-about img{width:185px}.premium-footer .footer-about p{max-width:310px;margin:16px 0 10px;line-height:1.65}
+.premium-footer .footer-contact-address{max-width:300px;margin:12px 0 0;line-height:1.6}.premium-footer .v9-social-links{gap:10px}.premium-footer .footer-grid a{line-height:1.45}
+@media(max-width:900px){.premium-footer .footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.site-main>.eco-hero-bleed .eco-hero-inner{width:min(100% - 24px,1320px);padding:45px 18px}}
+@media(max-width:540px){.premium-footer .footer-grid{grid-template-columns:1fr 1fr;gap:24px}.premium-footer .footer-about{grid-column:span 2}.site-main>.eco-hero-bleed .eco-hero-inner{grid-template-columns:1fr;width:100%;padding:34px 22px}.v10-range-specs dl>div{grid-template-columns:1fr;gap:2px}}

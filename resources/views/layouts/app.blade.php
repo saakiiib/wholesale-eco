@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123c33"><meta name="description" content="@yield('meta_description','Wholesale Eco Products: packaging supplies for UK coffee shops, restaurants and takeaways.')"><title>@yield('title','Wholesale Eco Products')</title><link rel="stylesheet" href="{{ asset('css/shop.css') }}"><link rel="stylesheet" href="{{ asset('css/eco-upgrade.css') }}"><link rel="stylesheet" href="{{ asset('css/v8-improvements.css') }}"><link rel="stylesheet" href="{{asset('css/v9-admin-store.css')}}">@stack('styles')</head>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123c33"><meta name="description" content="@yield('meta_description','Wholesale Eco Products: packaging supplies for UK coffee shops, restaurants and takeaways.')"><title>@yield('title','Wholesale Eco Products')</title><link rel="stylesheet" href="{{ asset('css/shop.css') }}"><link rel="stylesheet" href="{{ asset('css/eco-upgrade.css').'?v=10' }}"><link rel="stylesheet" href="{{ asset('css/v8-improvements.css').'?v=10' }}"><link rel="stylesheet" href="{{asset('css/v9-admin-store.css')}}"><link rel="stylesheet" href="{{asset('css/v10-review.css').'?v=10'}}">@stack('styles')</head>
 <body>
 @unless(request()->is('admin*'))
 <div class="topline">Wholesale essentials for growing businesses <span class="top-emphasis">· Foodservice packaging at bulk prices</span></div>
@@ -19,13 +19,17 @@
  @php
   $footerSettings=\App\Models\StoreSetting::whereIn('key',['business_name','business_email','business_phone','business_address','support_email','facebook_url','instagram_url','linkedin_url','whatsapp_number'])->pluck('value','key');
   $footerEmail=$footerSettings['support_email']??$footerSettings['business_email']??null;
+  if(in_array($footerEmail,['support@example.test','test@example.com'],true))$footerEmail=null;
   $footerPhone=$footerSettings['business_phone']??null;
+  $footerAddress=$footerSettings['business_address']??null;
+  if($footerAddress && str_contains($footerAddress,'1 Example Street'))$footerAddress=null;
+  if(in_array($footerPhone,['020 7946 0000','0000000000'],true))$footerPhone=null;
  @endphp
  <footer class="premium-footer"><div class="wrap"><div class="footer-grid">
- <div class="footer-about"><img src="{{ asset('design-preview/assets/wholesale-eco-logo.png') }}" alt="Wholesale Eco Products"><p>Packaging essentials for the businesses that keep Britain moving. Straightforward wholesale ordering, transparent case prices and easy reordering.</p><div class="footer-note">B2B wholesale supplies · UK</div><div class="v9-social-links">@foreach(['facebook_url'=>'Facebook','instagram_url'=>'Instagram','linkedin_url'=>'LinkedIn'] as $key=>$label)@if(filled($footerSettings[$key]??null))<a href="{{$footerSettings[$key]}}" target="_blank" rel="noopener noreferrer">{{$label}} ↗</a>@endif @endforeach</div>
+ <div class="footer-about"><img src="{{ asset('design-preview/assets/wholesale-eco-logo.png') }}" alt="Wholesale Eco Products"><p>Professional foodservice packaging at wholesale prices. Simple ordering and easy restocking for busy UK businesses.</p><div class="footer-note">B2B wholesale supplies · UK</div><div class="v9-social-links">@foreach(['facebook_url'=>'Facebook','instagram_url'=>'Instagram','linkedin_url'=>'LinkedIn'] as $key=>$label)@if(filled($footerSettings[$key]??null))<a href="{{$footerSettings[$key]}}" target="_blank" rel="noopener noreferrer">{{$label}} ↗</a>@endif @endforeach</div>
  @if($footerPhone)<a href="tel:{{preg_replace('/[^+0-9]/','',$footerPhone)}}">☎ {{$footerPhone}}</a>@endif
  @if($footerEmail)<a href="mailto:{{$footerEmail}}">✉ {{$footerEmail}}</a>@endif
- @if(filled($footerSettings['business_address']??null))<p class="footer-contact-address">{{ $footerSettings['business_address'] }}</p>@endif</div>
+ @if(filled($footerAddress))<p class="footer-contact-address">{{ $footerAddress }}</p>@endif</div>
  <div><h3>Shop</h3><a href="{{route('catalogue')}}">All packaging</a><a href="{{route('catalogue',['category'=>'cups'])}}">Cups &amp; lids</a><a href="{{route('catalogue',['category'=>'bags'])}}">Carrier bags</a><a href="{{route('catalogue',['category'=>'boxes'])}}">Food containers</a></div>
  <div><h3>Customer support</h3><a href="{{route('cart.index')}}">Basket</a><a href="{{route('checkout.form')}}">Checkout</a><a href="{{route('catalogue')}}">Product catalogue</a><a href="{{route('register')}}">Trade registration</a><a href="{{route('contact')}}">Contact us</a><a href="{{route('cookies')}}">Cookies & privacy choices</a></div>
  <div><h3>Trade accounts</h3><a href="{{route('register')}}">Create an account</a><a href="{{route('login')}}">Log in</a><a href="{{auth()->check()?(auth()->user()->isAdmin()?route('admin.dashboard'):route('account.dashboard')):route('login')}}">My dashboard</a><a href="{{route('catalogue')}}">Quick restock</a></div>
@@ -39,4 +43,4 @@
  @if(session('basket_added'))
  <div class="basket-toast" role="status" aria-live="polite" data-basket-toast><div class="toast-check">✓</div><div class="toast-body"><strong>Added to your basket!</strong><span>{{session('basket_added.name')}} · {{session('basket_added.packs')}} {{(int)session('basket_added.packs')===1?'case':'cases'}}</span><a href="{{route('cart.index')}}">View basket →</a></div><button type="button" class="toast-close" aria-label="Close notification" data-close-toast>×</button></div>
  @endif
- <script src="{{asset('js/eco-upgrade.js')}}" defer></script><script src="{{asset('js/v9-consent.js')}}" defer></script>@stack('scripts')</body></html>
+ <script src="{{asset('js/eco-upgrade.js').'?v=10'}}" defer></script><script src="{{asset('js/v9-consent.js')}}" defer></script>@stack('scripts')</body></html>

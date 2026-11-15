@@ -8,7 +8,8 @@
   <div class="portal-navlabel">WORKSPACE</div>
   <a class="{{request()->routeIs('admin.dashboard')?'active':''}}" href="{{route('admin.dashboard')}}">▦ &nbsp; Overview</a>
   <a class="{{request()->routeIs('admin.orders.*')?'active':''}}" href="{{route('admin.orders.index')}}">▤ &nbsp; Orders &amp; Fulfilment</a>
-  <a class="{{request()->routeIs('admin.products.*','admin.categories.*')?'active':''}}" href="{{route('admin.products.index')}}">▣ &nbsp; Product Catalogue</a>
+  <a class="{{request()->routeIs('admin.products.*')?'active':''}}" href="{{route('admin.products.index')}}">▣ &nbsp; Product Catalogue</a>
+  <a class="{{request()->routeIs('admin.categories.*')?'active':''}}" href="{{route('admin.categories.index')}}">↳ &nbsp; Manage Categories</a>
   <a class="{{request()->routeIs('admin.variants','admin.stock','admin.tier')?'active':''}}" href="{{route('admin.variants')}}">▥ &nbsp; Inventory &amp; Stock</a>
   <a class="{{request()->routeIs('admin.variants','admin.tier')?'active':''}}" href="{{route('admin.variants')}}">£ &nbsp; Wholesale Pricing</a>
   <a class="{{request()->routeIs('admin.customers.*')?'active':''}}" href="{{route('admin.customers.index')}}">♙ &nbsp; Trade Customers</a>
@@ -19,7 +20,8 @@
   <a class="{{request()->routeIs('admin.content.*')?'active':''}}" href="{{route('admin.content.index')}}">▧ &nbsp; Content Management</a>
   <a class="{{request()->routeIs('admin.seo.*')?'active':''}}" href="{{route('admin.seo.index')}}">⌕ &nbsp; SEO Management</a>
   <div class="portal-navlabel">MORE</div>
-  <a class="{{request()->routeIs('admin.team.*','admin.roles.*')?'active':''}}" href="{{route('admin.team.index')}}">♧ &nbsp; Team &amp; Permissions</a>
+  <a class="{{request()->routeIs('admin.team.*')?'active':''}}" href="{{route('admin.team.index')}}">♧ &nbsp; Admin Users</a>
+  @if(auth()->user()?->role==='admin')<a class="{{request()->routeIs('admin.roles.*')?'active':''}}" href="{{route('admin.roles.index')}}">🔐 &nbsp; Roles &amp; Permissions</a>@endif
   <a class="{{request()->routeIs('admin.audit.*')?'active':''}}" href="{{route('admin.audit.index')}}">◷ &nbsp; Activity History</a>
  @else
   <div class="portal-navlabel">YOUR WORKSPACE</div>
