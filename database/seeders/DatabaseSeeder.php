@@ -1,14 +1,9 @@
 <?php
 namespace Database\Seeders;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use App\Models\{Category,Product,ProductVariant,PriceTier,Business,User};
+use App\Models\{Category,Product,ProductVariant,PriceTier};
 class DatabaseSeeder extends Seeder {
  public function run():void {
-  if (!filter_var(env('ENABLE_DEMO_SEEDER',false),FILTER_VALIDATE_BOOLEAN)) {
-   $this->command?->warn('Demo seed skipped. To import verified supplier items use SupplierKraftRangeSeeder explicitly.');
-   return;
-  }
   $catalog=[
    ['Cups & Lids','cups',[['12oz Double Wall Kraft Coffee Cups','CUP-12-DW',1000,4600],['12oz Coffee Cup Lids','LID-12-BLK',1000,2800]]],
    ['Food Packaging','boxes',[['Kraft Burger Boxes','BOX-BURGER',200,3400],['Kraft Takeaway Containers','BOX-750ML',300,4200]]],
@@ -26,6 +21,9 @@ class DatabaseSeeder extends Seeder {
     foreach([4=>95,10=>90,20=>85] as $min=>$pct){PriceTier::updateOrCreate(['product_variant_id'=>$variant->id,'min_packs'=>$min],['unit_price_pence'=>(int)round($price*$pct/100)]);}
    }
   }
-  $this->call(DemoUsersSeeder::class); // demo admin/customer accounts — see .env (DEMO_ADMIN_*, DEMO_USER_PASSWORD)
+  $this->call([
+   DemoUsersSeeder::class,
+   SupplierKraftRangeSeeder::class,
+  ]);
  }
 }
