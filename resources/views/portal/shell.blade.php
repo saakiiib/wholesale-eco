@@ -13,6 +13,7 @@
   <a class="{{request()->routeIs('admin.variants','admin.stock','admin.tier')?'active':''}}" href="{{route('admin.variants')}}">▥ &nbsp; Inventory &amp; Stock</a>
   <a class="{{request()->routeIs('admin.variants','admin.tier')?'active':''}}" href="{{route('admin.variants')}}">£ &nbsp; Wholesale Pricing</a>
   <a class="{{request()->routeIs('admin.customers.*')?'active':''}}" href="{{route('admin.customers.index')}}">♙ &nbsp; Trade Customers</a>
+  @if(auth()->user()?->role==='admin')<a class="{{request()->routeIs('admin.coupons.*')?'active':''}}" href="{{route('admin.coupons.index')}}">% &nbsp; Coupons &amp; Discounts</a>@endif
   <a class="{{request()->routeIs('admin.reports')?'active':''}}" href="{{route('admin.reports')}}">▥ &nbsp; Analytics &amp; Reports</a>
   <div class="portal-navlabel">STORE MANAGEMENT</div>
   <a class="{{request()->routeIs('admin.settings.*')?'active':''}}" href="{{route('admin.settings.index')}}">⚙ &nbsp; Business Setup</a>
@@ -33,7 +34,7 @@
  @endif
  <div class="portal-navlabel">QUICK LINKS</div>
  <a href="{{route('catalogue')}}">↗ &nbsp; Shop wholesale</a><a href="{{route('cart.index')}}">▱ &nbsp; View basket</a>
- <div class="portal-sidebar-foot">Secure {{ $portal==='admin'?'administrator':'trade customer' }} workspace</div>
+ <form method="post" action="{{route('logout')}}" class="v11-logout-form">@csrf<button type="submit">↪ &nbsp; Log out securely</button></form><div class="portal-sidebar-foot">Secure {{ $portal==='admin'?'administrator':'trade customer' }} workspace</div>
  </aside>
  <div class="portal-workspace">
   <div class="portal-topbar"><span>{{ $portal==='admin'?'STORE OPERATIONS · Wholesale Eco Products':'Your business, all in one place' }}</span><div class="portal-userbadge">{{strtoupper(substr(auth()->user()->name,0,1))}} <span>{{auth()->user()->name}}</span></div></div>

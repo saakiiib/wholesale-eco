@@ -8,6 +8,7 @@ Route::post('/contact',[\App\Http\Controllers\ContactController::class,'send'])-
 Route::get('/shop',[ShopController::class,'catalogue'])->name('catalogue');
 Route::get('/products/{product:slug}',[ShopController::class,'product'])->name('products.show');
 Route::get('/basket',[CartController::class,'index'])->name('cart.index');
+Route::post('/basket/coupon',[CartController::class,'coupon'])->name('cart.coupon');
 Route::post('/basket/add',[CartController::class,'add'])->name('cart.add');
 Route::post('/basket/update',[CartController::class,'update'])->name('cart.update');
 Route::get('/checkout',[CheckoutController::class,'form'])->name('checkout.form');
@@ -50,6 +51,8 @@ Route::middleware(['auth','active-business'])->prefix('account')->name('account.
 });
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
  Route::get('/products',[AdminPortalController::class,'products'])->name('products.index');
+ Route::post('/products/{product}/move',[AdminPortalController::class,'moveProduct'])->name('products.move');
+ Route::post('/categories/{category}/move',[AdminPortalController::class,'moveCategory'])->name('categories.move');
  Route::get('/products/new',[AdminPortalController::class,'createProduct'])->name('products.create');
  Route::post('/products',[AdminPortalController::class,'storeProduct'])->name('products.store');
  Route::get('/products/{product}/edit',[AdminPortalController::class,'editProduct'])->name('products.edit');
@@ -70,6 +73,9 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
 
 // V6 admin management modules — all routes require authenticated admin access.
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/coupons',[\App\Http\Controllers\AdminCouponsController::class,'index'])->name('coupons.index');
+ Route::post('/coupons',[\App\Http\Controllers\AdminCouponsController::class,'store'])->name('coupons.store');
+ Route::put('/coupons/{coupon}',[\App\Http\Controllers\AdminCouponsController::class,'update'])->name('coupons.update');
  Route::get('/products/{product}/images',[AdminManagementController::class,'images'])->name('images.index');
  Route::post('/products/{product}/images',[AdminManagementController::class,'addImage'])->name('images.store');
  Route::delete('/products/{product}/images/{image}',[AdminManagementController::class,'removeImage'])->name('images.destroy');
@@ -89,6 +95,8 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::get('/seo',[AdminManagementController::class,'seo'])->name('seo.index');
  Route::put('/seo',[AdminManagementController::class,'saveSeo'])->name('seo.update');
  Route::get('/team',[AdminManagementController::class,'team'])->name('team.index');
+ Route::get('/team/{user}/edit',[AdminManagementController::class,'editTeam'])->name('team.edit');
+ Route::put('/team/{user}/profile',[AdminManagementController::class,'saveTeamProfile'])->name('team.profile.update');
  Route::get('/roles',[\App\Http\Controllers\AdminRolesController::class,'index'])->name('roles.index');
  Route::post('/roles',[\App\Http\Controllers\AdminRolesController::class,'save'])->name('roles.store');
  Route::put('/roles/{role}',[\App\Http\Controllers\AdminRolesController::class,'save'])->name('roles.update');

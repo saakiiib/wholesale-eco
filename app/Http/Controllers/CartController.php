@@ -6,7 +6,14 @@ use Illuminate\Http\Request;
 class CartController {
  public function index(Request $request,PricingService $pricing){
   $cart=$request->session()->get('cart',[]);$quote=null;$error=null;
-  try{$quote=$pricing->quote($cart,$request->user()?->business_id);}catch(\DomainException $e){$error=$e->getMessage();}
+  try{$quote=$pricing->quote($cart,$request->user()?->business_id,$request->session()->get('coupon_code'));}catch(\DomainException $e){
+   $error=$e->getMessage();
+   if($request->session()->has('coupon_code')){
+    $request->session()->forget('coupon_code');
+    try{$quote=$pricing->quote($cart,$request->user()?->business_id);$error='The previous discount code is no longer applicable and was removed. '.$error;}
+    catch(\DomainException $inner){$error=$inner->getMessage();}
+   }
+  }
   return view('shop.cart',compact('quote','error'));
  }
  public function add(Request $request){
@@ -18,6 +25,14 @@ class CartController {
   $cart=$request->session()->get('cart',[]);$key=(string)$variant->id;
   $cart[$key]=min(10000,((int)($cart[$key]??0))+$data['packs']);$request->session()->put('cart',$cart);
   return redirect()->back()->with('basket_added', ['name'=>$variant->product->name, 'packs'=>(int)$data['packs']])->with('success','Product added to your basket.');
+ }
+ public function coupon(Request $request,PricingService $pricing){
+  $data=$request->validate(['code'=>'nullable|string|max:60']);
+  $code=strtoupper(trim($data['code']??''));
+  if($code===''){$request->session()->forget('coupon_code');return back()->with('success','Discount code removed.');}
+  try{$pricing->quote($request->session()->get('cart',[]),$request->user()?->business_id,$code);}
+  catch(\DomainException $e){return back()->withErrors(['coupon'=>$e->getMessage()]);}
+  $request->session()->put('coupon_code',$code);return back()->with('success','Discount code applied.');
  }
  public function update(Request $request){
   $data=$request->validate(['variant_id'=>'required|integer|exists:product_variants,id','packs'=>'required|integer|min:0|max:10000']);

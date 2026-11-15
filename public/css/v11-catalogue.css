@@ -1,0 +1,18 @@
+/* V11 product listing: prevent breaking product names into one-character columns. */
+.kite-matrix{min-width:1330px!important;table-layout:fixed}
+.kite-matrix .kite-desc-col,.kite-matrix .kite-description-cell{width:300px!important;min-width:300px!important;max-width:300px!important}
+.kite-matrix .kite-description-cell{padding:12px 14px!important}
+.kite-variant-flex{display:grid!important;grid-template-columns:70px minmax(0,1fr);align-items:center;gap:12px!important;min-width:0}
+.kite-variant-flex>div:last-child{min-width:0;max-width:100%}
+.kite-description-cell strong,.kite-description-cell small,.kite-description-cell a{overflow-wrap:normal!important;word-break:normal!important;hyphens:none!important}
+.kite-description-cell strong{font-size:13px!important;line-height:1.38!important;margin-bottom:4px}
+.kite-description-cell small{font-size:11px!important;line-height:1.4!important}
+.kite-description-cell .category-product-link{display:block;font-weight:800}
+.kite-description-cell .category-details-link{font-size:11px!important;line-height:1.4;display:inline-block}
+.kite-matrix-scroller{overflow-x:auto!important;scrollbar-width:thin}
+.v11-logout-form{padding:12px 13px}.v11-logout-form button{width:100%;text-align:left;background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:9px;padding:10px;color:#fff;cursor:pointer;font:inherit}
+.v11-logout-form button:hover{background:rgba(255,255,255,.12)}
+.v11-vat-box{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:12px;font-weight:700}
+.v11-vat-box button{border:1px solid #bfd3c1;padding:7px 9px;border-radius:7px;background:#fff;color:#214934;cursor:pointer;font:inherit}
+.v11-vat-box button[aria-pressed="true"]{background:#216b46;color:#fff}
+@media(max-width:720px){.v11-vat-box{flex-wrap:wrap}.kite-matrix{min-width:1330px!important}}

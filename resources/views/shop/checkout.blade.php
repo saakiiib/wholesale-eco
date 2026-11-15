@@ -10,5 +10,5 @@
 <label class="check"><input type="checkbox" name="terms" value="1" required> I agree to the wholesale terms and confirm this is a business purchase.</label>
 <button class="btn">Continue to secure payment →</button></form>
 <aside class="panel summary"><h2>Order summary</h2>@foreach($quote['lines'] as $line)<p>{{$line['variant']->product->name}} ({{$line['packs']}} cases) <b>£{{number_format($line['subtotal_pence']/100,2)}}</b></p>@endforeach
-<hr><p>Products <b>£{{number_format($quote['subtotal_pence']/100,2)}}</b></p><p>Delivery <b>£{{number_format($quote['delivery_pence']/100,2)}}</b></p><p>VAT on products <b>£{{number_format($quote['vat_pence']/100,2)}}</b></p><h2>£{{number_format($quote['grand_total_pence']/100,2)}}</h2><small>Payment is final only after the verified Stripe webhook confirms it.</small></aside></div>
+<hr><p>Discount <b>−£{{number_format(($quote['discount_pence']??0)/100,2)}}</b></p><p>Products <b>£{{number_format($quote['subtotal_pence']/100,2)}}</b></p><p>Delivery <b>£{{number_format($quote['delivery_pence']/100,2)}}</b></p><p>VAT on products <b>£{{number_format($quote['vat_pence']/100,2)}}</b></p><h2>£{{number_format($quote['grand_total_pence']/100,2)}}</h2><small>Payment is final only after the verified Stripe webhook confirms it.</small></aside></div>
 @endsection

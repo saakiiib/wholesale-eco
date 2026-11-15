@@ -14,7 +14,7 @@ class ShopController {
    'promo_heading'=>'Less time ordering. More time serving.',
    'promo_description'=>'From your morning coffee rush to the evening takeaway rush, restocking should be the easiest part of your day. Compare case sizes, see volume savings and order what you need.',
   ])->merge(\App\Models\StoreSetting::whereIn('key',['hero_label','hero_title','hero_description','promo_heading','promo_description'])->pluck('value','key')->filter(fn($v)=>filled($v)));
-  return view('shop.home',['categories'=>Category::where('active',true)->orderBy('sort_order')->get(),'homepageSettings'=>$homepageSettings,'featured'=>ProductVariant::with('product')->where('active',true)->whereHas('product',fn($q)=>$q->where('active',true))->take(6)->get()]);
+  return view('shop.home',['categories'=>Category::where('active',true)->orderBy('sort_order')->get(),'homepageSettings'=>$homepageSettings,'featured'=>ProductVariant::with('product')->where('active',true)->whereHas('product',fn($q)=>$q->where('active',true))->orderBy('product_id')->take(6)->get()]);
  }
  public function catalogue(Request $request){
   $categories=Category::where('active',true)->orderBy('sort_order')->orderBy('name')->get();
@@ -36,7 +36,7 @@ class ShopController {
    ->when($request->filled('q'),function($q)use($request){
     $term='%'.$request->query('q').'%';
     $q->where(fn($w)=>$w->where('name','like',$term)->orWhere('description','like',$term)->orWhereHas('variants',fn($v)=>$v->where('sku','like',$term)->orWhere('label','like',$term)));
-   })->orderBy('name')->paginate($category?12:20)->withQueryString();
+   })->orderBy('sort_order')->orderBy('name')->paginate($category?12:20)->withQueryString();
   $ancestors=collect();
   if($category){
    $current=$category;
