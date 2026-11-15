@@ -59,6 +59,13 @@ Route::middleware(['auth','active-business'])->prefix('account')->name('account.
  Route::put('/profile',[AccountPortalController::class,'updateProfile'])->name('profile.update');
 });
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/products/export/catalogue', [\App\Http\Controllers\ProductWorkspaceController::class,'export'])->name('workspace.export');
+ Route::get('/products/{product}/workspace', [\App\Http\Controllers\ProductWorkspaceController::class,'show'])->name('workspace.show');
+ Route::post('/products/{product}/workspace/variants', [\App\Http\Controllers\ProductWorkspaceController::class,'addVariant'])->name('workspace.variants.store');
+ Route::put('/products/{product}/workspace/variants/{variant}/prices', [\App\Http\Controllers\ProductWorkspaceController::class,'savePrices'])->name('workspace.prices.update');
+ Route::post('/products/{product}/duplicate', [\App\Http\Controllers\ProductWorkspaceController::class,'duplicate'])->name('workspace.duplicate');
+});
+Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
  Route::get('/products',[AdminPortalController::class,'products'])->name('products.index');
  Route::post('/products/{product}/move',[AdminPortalController::class,'moveProduct'])->name('products.move');
  Route::post('/categories/{category}/move',[AdminPortalController::class,'moveCategory'])->name('categories.move');
