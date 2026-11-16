@@ -18,4 +18,11 @@
 </tbody></table><div class="sum"><div><span>Net products</span><strong>£{{number_format($order->subtotal_pence/100,2)}}</strong></div><div><span>Discount (ex VAT)</span><strong>−£{{number_format(($order->discount_pence??0)/100,2)}}</strong></div><div><span>Delivery (recorded)</span><strong>£{{number_format($order->delivery_pence/100,2)}}</strong></div><div><span>Total recorded VAT</span><strong>£{{number_format($order->vat_pence/100,2)}}</strong></div><div class="total"><span>Total</span><strong>£{{number_format($order->grand_total_pence/100,2)}}</strong></div></div>
 <p><strong>Payment status:</strong> {{ucfirst($order->payment_status)}} · <strong>Fulfilment:</strong> {{ucfirst($order->status)}}</p>
 @if(!$isTaxInvoice)<p class="muted">This is not a VAT invoice. A VAT invoice is available only for paid orders when the supplier's VAT registration is configured and verified.</p>@endif
-<div class="foot">Thank you for choosing Wholesale Eco Products. Please contact {{$settings['support_email']??$settings['business_email']??'our support team'}} regarding your order. DRAFT: Not an issued tax invoice. The merchant must verify invoice numbering, preserved seller details and all VAT (including delivery VAT) before production use.</div></main></body></html>
+<div class="foot"><strong>{{ $settings['business_name'] ?? 'Wholesale Eco Products' }}</strong><br>
+@if(filled($settings['business_address'] ?? null))<span style="white-space:pre-line">{{ $settings['business_address'] }}</span><br>@endif
+@if(filled($settings['business_phone'] ?? null))Phone: {{ $settings['business_phone'] }} &nbsp;@endif
+@if(filled($settings['business_email'] ?? null))Email: {{ $settings['business_email'] }} &nbsp;@endif
+@if(filled($settings['support_email'] ?? null) && ($settings['support_email']??'')!==($settings['business_email']??''))Support: {{ $settings['support_email'] }} &nbsp;@endif
+@if(filled($settings['vat_number'] ?? null))VAT: {{ $settings['vat_number'] }} &nbsp;@endif
+@if(filled($settings['company_number'] ?? null))Company no: {{ $settings['company_number'] }}@endif
+<hr style="border:0;border-top:1px solid #e1e7e2;margin:12px 0">Thank you for choosing Wholesale Eco Products. Please contact {{$settings['support_email']??$settings['business_email']??'our support team'}} regarding your order. DRAFT: Not an issued tax invoice. The merchant must verify invoice numbering, preserved seller details and all VAT (including delivery VAT) before production use.</div></main></body></html>

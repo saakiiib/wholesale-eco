@@ -52,7 +52,17 @@ class ShopController {
  public function product(Product $product){
   abort_unless($product->active,404);
   $product->load(['category','images','variants'=>fn($q)=>$q->where('active',true)->with('priceTiers')]);
-  $sidebarCategories=Category::where('active',true)->orderBy('sort_order')->get();
-  return view('shop.product',compact('product','sidebarCategories'));
+  $sidebarCategories=Category::where('active',true)->orderBy('sort_order')->orderBy('name')->get();
+  $sidebarCategoryAncestors=[];
+  $currentCategory=$product->category;
+  $visitedCategoryIds=[];
+  while($currentCategory && $currentCategory->parent_id && !in_array($currentCategory->id,$visitedCategoryIds,true)){
+   $visitedCategoryIds[]=$currentCategory->id;
+   $parentCategory=$sidebarCategories->firstWhere('id',$currentCategory->parent_id);
+   if(!$parentCategory)break;
+   $sidebarCategoryAncestors[]=$parentCategory->id;
+   $currentCategory=$parentCategory;
+  }
+  return view('shop.product',compact('product','sidebarCategories','sidebarCategoryAncestors'));
  }
 }

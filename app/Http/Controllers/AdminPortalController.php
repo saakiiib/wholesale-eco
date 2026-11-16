@@ -75,7 +75,7 @@ class AdminPortalController {
  public function customers(Request $r){$q=Business::with('users:id,business_id,email')->withCount('orders','users')->latest();if($r->filled('q'))$q->where('name','like','%'.$r->query('q').'%');return view('portal.admin.customers',['businesses'=>$q->paginate(15)->withQueryString()]);}
  public function customer(Business $business){return view('portal.admin.customer',['business'=>$business->load('users','addresses'),'orders'=>$business->orders()->latest()->take(20)->get()]);}
  public function customerStatus(Request $r,Business $business){$data=$r->validate(['status'=>'required|in:active,suspended']);$business->update($data);return back()->with('success','Account status updated.');}
- public function orders(Request $r){$q=Order::latest();if($r->filled('q'))$q->where(function($sub)use($r){$term='%'.$r->query('q').'%';$sub->where('order_number','like',$term)->orWhere('business_name','like',$term);});if(in_array($r->query('payment'),['paid','unpaid','failed'],true))$q->where('payment_status',$r->query('payment'));
+ public function orders(Request $r){$q=Order::with('payment')->latest();if($r->filled('q'))$q->where(function($sub)use($r){$term='%'.$r->query('q').'%';$sub->where('order_number','like',$term)->orWhere('business_name','like',$term);});if(in_array($r->query('payment'),['paid','unpaid','failed'],true))$q->where('payment_status',$r->query('payment'));
   $status=$r->query('status','all');
   $allowed=['pending','paid','processing','packed','dispatched','delivered','collected','returned','cancelled'];
   if(in_array($status,$allowed,true)){
@@ -83,6 +83,6 @@ class AdminPortalController {
    else $q->where('status',$status);
   }
   return view('portal.admin.orders',['orders'=>$q->paginate(20)->withQueryString()]);}
- public function order(Order $order){return view('portal.admin.order',['order'=>$order->load('items','business','payment')]);}
+ public function order(Order $order){return view('portal.admin.order',['order'=>$order->load('items','business','payment'),'shipment'=>DB::table('shipments')->where('order_id',$order->id)->orderByDesc('id')->first()]);}
  public function reports(){return view('portal.admin.reports',['monthSales'=>Order::where('payment_status','paid')->where('paid_at','>=',now()->startOfMonth())->sum('grand_total_pence'), 'revenue'=>Order::where('payment_status','paid')->sum('grand_total_pence'),'paidOrders'=>Order::where('payment_status','paid')->count(), 'top'=>DB::table('order_items')->join('orders','orders.id','=','order_items.order_id')->where('orders.payment_status','paid')->selectRaw('order_items.sku,order_items.product_name,SUM(order_items.packs) as packs,SUM(order_items.line_subtotal_pence) as total')->groupBy('order_items.sku','order_items.product_name')->orderByDesc('total')->limit(12)->get()]);}
 }

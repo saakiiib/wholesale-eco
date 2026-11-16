@@ -16,12 +16,17 @@ $children=$categories->where('parent_id',$category->id);
 @endphp
 <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{route('home')}}">Home</a><span>›</span><a href="{{route('catalogue')}}">Shop</a><span>›</span>@foreach($ancestors as $ancestor)<a href="{{route('catalogue',['category'=>$ancestor->slug])}}">{{$ancestor->name}}</a><span>›</span>@endforeach<strong>{{$category->name}}</strong></nav>
 <div class="kite-product-shell">
- <aside class="kite-sidebar" aria-label="Product categories"><div class="kite-side-title">Browse packaging <span>↗</span></div>
- @foreach($categories as $navCategory)
-  @php $isChild=(bool)$navCategory->parent_id; $selected=in_array($navCategory->id,[$category->id,...$ancestors->pluck('id')->all()],true); @endphp
-  <a href="{{route('catalogue',['category'=>$navCategory->slug])}}" class="{{$selected?'active':''}} {{$isChild?'category-nested':''}}"><span class="side-arrow">›</span>{{$navCategory->name}}</a>
- @endforeach
- <div class="kite-side-help"><strong>Ordering for your business?</strong><p>Save repeat purchases, monitor deliveries and manage your account.</p><a href="{{route('register')}}">Open a trade account →</a></div></aside>
+ <aside class="kite-sidebar we-scroll-sidebar" aria-label="Product categories">
+   <div class="kite-side-title">Browse packaging <span>↗</span></div>
+   <div class="we-category-scroll">
+      @include('shop.partials.category-tree', [
+          'navCategories' => $categories,
+          'selectedCategoryId' => $category->id,
+          'ancestorCategoryIds' => $ancestors->pluck('id')->all()
+      ])
+   </div>
+   <div class="kite-side-help"><strong>Ordering for your business?</strong><p>Save repeat purchases and manage your account.</p><a href="{{route('register')}}">Open a trade account →</a></div>
+ </aside>
  <div class="kite-product-main">
   <header class="kite-pageheading"><div><span class="eyebrow">WHOLESALE CATEGORY</span><h1>{{$category->name}}</h1><p>Explore the range, compare pack sizes and order at volume prices.</p></div><div class="kite-count">{{$products->total()}} {{\Illuminate\Support\Str::plural('product',$products->total())}}</div></header>
   <section class="kite-overview" aria-label="Category overview, product images and search">
@@ -71,6 +76,6 @@ $children=$categories->where('parent_id',$category->id);
   <section class="kite-bottom-cards" id="category-guide"><div><h3>More about this range</h3><p>Choose a product to view photos and full details, or select your case quantities directly above.</p></div><div id="category-help"><h3>Need help ordering?</h3><p>Quantity discounts are calculated per SKU at checkout. Delivery and VAT are calculated separately.</p><a href="{{route('cart.index')}}">View basket →</a></div><div><h3>Restock in seconds</h3><p>Save your regular products and repeat orders through a trade account.</p><a href="{{route('register')}}">Open a trade account →</a></div></section>
  </div>
 </div>
-@push('styles')<link rel="stylesheet" href="{{asset('css/kite-product-v4.css')}}"><link rel="stylesheet" href="{{asset('css/v8-improvements.css')}}"><link rel="stylesheet" href="{{asset('css/category-v5.css')}}">@endpush
-@push('scripts')<script src="{{asset('js/kite-product-v4.js').'?v=10'}}" defer></script>@endpush
+@push('styles')<link rel="stylesheet" href="{{asset('css/kite-product-v4.css')}}"><link rel="stylesheet" href="{{asset('css/v8-improvements.css')}}"><link rel="stylesheet" href="{{asset('css/category-v5.css')}}"><link rel="stylesheet" href="{{asset('css/category-tree-v15.css')}}">@endpush
+@push('scripts')<script src="{{asset('js/kite-product-v4.js').'?v=10'}}" defer></script><script src="{{asset('js/category-tree-v15.js')}}" defer></script>@endpush
 @endsection

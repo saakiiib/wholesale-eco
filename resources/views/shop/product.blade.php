@@ -11,12 +11,16 @@ $variantRows=$product->variants->sortBy('label')->values();
 @endphp
 <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{route('home')}}">Home</a><span>›</span><a href="{{route('catalogue')}}">All products</a><span>›</span>@if($product->category)<a href="{{route('catalogue',['category'=>$product->category->slug])}}">{{$product->category->name}}</a><span>›</span>@endif<strong>{{$product->name}}</strong></nav>
 <div class="kite-product-shell">
- <aside class="kite-sidebar" aria-label="Product categories">
-  <div class="kite-side-title">Browse packaging <span>↗</span></div>
-  @foreach($sidebarCategories as $category)
-   <a href="{{route('catalogue',['category'=>$category->slug])}}" class="{{($product->category_id===$category->id)?'active':''}}"><span class="side-arrow">›</span>{{$category->name}}</a>
-  @endforeach
-  <div class="kite-side-help"><strong>Need a regular supply?</strong><p>Open a trade account to track orders and reorder essentials.</p><a href="{{route('register')}}">Create account →</a></div>
+ <aside class="kite-sidebar we-scroll-sidebar" aria-label="Product categories">
+   <div class="kite-side-title">Browse packaging <span>↗</span></div>
+   <div class="we-category-scroll">
+     @include('shop.partials.category-tree', [
+         'navCategories' => $sidebarCategories,
+         'selectedCategoryId' => $product->category_id,
+         'ancestorCategoryIds' => $sidebarCategoryAncestors
+     ])
+   </div>
+   <div class="kite-side-help"><strong>Need a regular supply?</strong><p>Open a trade account to track orders and reorder essentials.</p><a href="{{route('register')}}">Create account →</a></div>
  </aside>
  <div class="kite-product-main">
   <header class="kite-pageheading"><div><span class="eyebrow">PRODUCT RANGE</span><h1>{{$product->name}}</h1><p>Compare product options, specifications and case prices in one place.</p></div><div class="kite-count">{{ $variantRows->count() }} purchasing {{ $variantRows->count()===1?'option':'options' }}</div></header>
@@ -68,6 +72,6 @@ $variantRows=$product->variants->sortBy('label')->values();
   <section class="kite-bottom-cards" id="kite-product-details"><div><h3>Product information</h3><p>{{$product->description ?: 'Please contact our team if you need dimensions, material specifications or packaging suitability details.'}}</p></div><div id="kite-related-info"><h3>Need help ordering?</h3><p>Select a quantity of cases in the table and add it to the basket. Review VAT and delivery costs at checkout.</p><a href="{{route('cart.index')}}">View basket →</a></div><div><h3>Make restocking easier</h3><p>Create a trade account to follow your orders, save purchasing lists and quickly reorder supplies.</p><a href="{{route('register')}}">Create a trade account →</a></div></section>
  </div>
 </div>
-@push('styles')<link rel="stylesheet" href="{{asset('css/kite-product-v4.css')}}"><link rel="stylesheet" href="{{asset('css/v8-improvements.css')}}">@endpush
-@push('scripts')<script src="{{asset('js/kite-product-v4.js').'?v=10'}}" defer></script>@endpush
+@push('styles')<link rel="stylesheet" href="{{asset('css/kite-product-v4.css')}}"><link rel="stylesheet" href="{{asset('css/v8-improvements.css')}}"><link rel="stylesheet" href="{{asset('css/category-tree-v15.css')}}">@endpush
+@push('scripts')<script src="{{asset('js/category-tree-v15.js')}}" defer></script><script src="{{asset('js/kite-product-v4.js').'?v=10'}}" defer></script>@endpush
 @endsection

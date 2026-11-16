@@ -41,7 +41,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::get('/variants',[AdminController::class,'variants'])->name('variants');
  Route::post('/stock/{variant}',[AdminController::class,'stock'])->name('stock');
  Route::post('/tiers/{variant}',[AdminController::class,'tier'])->name('tier');
- Route::post('/orders/{order}/status',[AdminController::class,'status'])->name('orders.status');
+ Route::post('/orders/{order}/status',[\App\Http\Controllers\AdminOrderFulfilmentController::class,'update'])->name('orders.status');
 });
 
 // V3 portal modules; all actions preserve the account/admin middleware above.
@@ -121,7 +121,8 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::post('/team',[AdminManagementController::class,'createTeam'])->name('team.store');
  Route::put('/team/{user}',[AdminManagementController::class,'updateTeam'])->name('team.update');
  Route::get('/audit-log',[AdminManagementController::class,'auditLog'])->name('audit.index');
- Route::post('/orders/{order}/tracking',[AdminManagementController::class,'saveTracking'])->name('orders.tracking');
+ Route::post('/orders/{order}/tracking',[\App\Http\Controllers\AdminOrderFulfilmentController::class,'tracking'])->name('orders.tracking');
+ Route::post('/orders/{order}/dispatch-email/retry',[\App\Http\Controllers\AdminOrderFulfilmentController::class,'retryNotification'])->name('orders.dispatch-email.retry');
  Route::get('/orders-export',[AdminManagementController::class,'exportOrders'])->name('orders.export');
 });
 Route::get('/pages/{page:slug}',function(\App\Models\CmsPage $page){abort_unless($page->published,404);return view('shop.cms-page',compact('page'));})->name('pages.show');
