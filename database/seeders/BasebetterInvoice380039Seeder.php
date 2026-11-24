@@ -13,24 +13,12 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * Basebetter invoice INV-380039 (21 November 2026): 18 distinct purchasable packs.
+ * Basebetter invoice INV-380039: 18 purchasable packs grouped into 8 products.
  *
- * Run only this seeder using:
  *   php artisan db:seed --class=Database\\Seeders\\BasebetterInvoice380039Seeder
  *
- * Safe to rerun: related SKUs are grouped as selectable variants; existing prices,
- * stock, images, attributes, variant settings and customer prices are untouched.
- *
- * ATTENTION:
- * - All supplier invoice unit costs EXCLUDE VAT. Selling pack price = cost + 20% markup.
- * - Source supplies purchased quantities, NOT guaranteed present-day inventory.
- *   Default seeded stock is ZERO. To use original quantities as OPENING stock,
- *   set WHOLESALE_INV380039_USE_INVOICE_QUANTITIES=true explicitly for first run.
- * - Pallet counts and manufacturer SKUs are not supplied: pallet ordering is OFF.
- * - Invoice contains NO product photos. Use a verified local image manifest; no
- *   substitute or remote images will be invented.
- * - Products start hidden (inactive) pending merchant approval and photography.
- * - Quantity discount tiers are not seeded because the invoice specifies none.
+ * Rerun-safe: products, variants are set ACTIVE and stock_packs is set to the
+ * invoice/xlsx quantity. Existing prices, images and attributes are kept.
  */
 class BasebetterInvoice380039Seeder extends Seeder
 {
@@ -38,15 +26,9 @@ class BasebetterInvoice380039Seeder extends Seeder
     private const MARKUP_PERCENT = 20;
     private const VAT_BPS = 2000;
 
-    /**
-     * Related invoice lines become selectable SKUs within a single product.
-     * Reruns preserve existing merchant pricing, stock, flags and attributes.
-     * Previous V18 one-product-per-invoice-line drafts are consolidated safely.
-     */
     public function run(): void
     {
-        $useInvoiceStock = filter_var(env('WHOLESALE_INV380039_USE_INVOICE_QUANTITIES', false), FILTER_VALIDATE_BOOLEAN);
-        DB::transaction(function () use ($useInvoiceStock): void {
+        DB::transaction(function (): void {
             $root = $this->category('boxes', 'Food Packaging', null);
             $cups = $this->category('cups', 'Cups & Lids', null);
             $categories = [
@@ -67,13 +49,15 @@ class BasebetterInvoice380039Seeder extends Seeder
                         'name' => $name,
                         'description' => $description,
                         'image_path' => null,
-                        'active' => false,
+                        'active' => true,
                         'meta_title' => Str::limit($name . ' | Wholesale Eco Products', 250, ''),
                         'meta_description' => Str::limit($description, 155, ''),
                         'sort_order' => 100,
                     ]);
                 } elseif ((int) $product->category_id !== (int) $categories[$categoryKey]->id) {
                     throw new RuntimeException('Grouped product category mismatch for ' . $slug . '. Review manually.');
+                } elseif (!$product->active) {
+                    $product->update(['active' => true]);
                 }
                 $groups[$key]['product'] = $product;
             }
@@ -86,21 +70,22 @@ class BasebetterInvoice380039Seeder extends Seeder
 
                 if ($variant) {
                     if ((int) $variant->product_id !== (int) $product->id) {
-                        // Migrate only a previously-seeded single-SKU draft.
                         $old = Product::findOrFail($variant->product_id);
-                        if ($old->slug !== $oldSlug || $old->name !== $name || ($variant->attributes['source_invoice'] ?? null) !== self::SOURCE || $old->active || $old->images()->exists()
-                            || $old->variants()->count() !== 1) {
-                            throw new RuntimeException('Cannot automatically regroup edited/published SKU ' . $sku . '. Resolve manually.');
+                        if ($old->slug !== $oldSlug || $old->name !== $name || ($variant->attributes['source_invoice'] ?? null) !== self::SOURCE
+                            || $old->images()->exists() || $old->variants()->count() !== 1) {
+                            throw new RuntimeException('Cannot automatically regroup edited SKU ' . $sku . '. Resolve manually.');
                         }
                         $variant->update(['product_id' => $product->id]);
-                        // Old draft now has no variants; remove it to avoid empty catalogue entries.
                         $old->delete();
                     }
-                    // Keep any merchant-edited variant label/price/stock/attributes intact.
+                    // Activate and set stock from the invoice/xlsx.
+                    $variant->update([
+                        'active' => true,
+                        'stock_packs' => $invoiceBoxes,
+                    ]);
                 } else {
-                    // Do not adopt unknown merchant SKUs or duplicate invoice lines.
                     $legacy = Product::where('slug', $oldSlug)->first();
-                    if ($legacy && ($legacy->active || $legacy->images()->exists() || $legacy->variants()->exists())) {
+                    if ($legacy && ($legacy->images()->exists() || $legacy->variants()->exists())) {
                         throw new RuntimeException('Conflicting legacy product ' . $oldSlug . '. Resolve manually.');
                     }
                     if ($legacy) $legacy->delete();
@@ -124,8 +109,8 @@ class BasebetterInvoice380039Seeder extends Seeder
                         'show_pallet_units' => false,
                         'base_pack_price_pence' => $sellingPence,
                         'vat_rate_bps' => self::VAT_BPS,
-                        'stock_packs' => $useInvoiceStock ? $invoiceBoxes : 0,
-                        'active' => false,
+                        'stock_packs' => $invoiceBoxes,
+                        'active' => true,
                     ]);
                 }
 
@@ -210,30 +195,21 @@ class BasebetterInvoice380039Seeder extends Seeder
         if ((int) ($category->parent_id ?? 0) !== (int) ($parentId ?? 0)) {
             throw new RuntimeException('Existing category slug has unexpected parent: ' . $slug);
         }
+        if (!$category->active) {
+            $category->update(['active' => true]);
+        }
         return $category;
     }
 
-    private function description(string $name, int $units): string
-    {
-        return $name . '. Wholesale pack containing ' . number_format($units) . ' units. '
-            . 'Supplier invoice ' . self::SOURCE . '. Confirm technical specifications, '
-            . 'product imagery and live stock before publishing.';
-    }
-
-    /**
-     * Optional merchant-supplied images (relative to storage/app/public).
-     * Example: 'BB-INV380039-01' => ['products/basebetter/1300ml-bowl.jpg'],
-     * Do not add a filename unless the actual product photo has been uploaded.
-     * No image rows are created while this array is empty.
-     */
+    /** Optional images relative to storage/app/public, e.g. 'BB-INV380039-01' => ['products/basebetter/1300ml-bowl.jpg'] */
     private function verifiedPhotos(): array
     {
         return [];
     }
 
     /**
-     * [provisional SKU, invoice line name, category key, units per box,
-     *  supplier cost in pennies ex VAT, invoice box quantity, known attributes].
+     * [SKU, invoice line name, category key, units per box,
+     *  supplier cost in pennies ex VAT, stock (boxes) from xlsx, attributes].
      */
     private function items(): array
     {
