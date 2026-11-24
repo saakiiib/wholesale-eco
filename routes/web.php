@@ -129,4 +129,9 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::post('/orders/{order}/dispatch-email/retry',[\App\Http\Controllers\AdminOrderFulfilmentController::class,'retryNotification'])->name('orders.dispatch-email.retry');
  Route::get('/orders-export',[AdminManagementController::class,'exportOrders'])->name('orders.export');
 });
+
+// Temporary maintenance: wipes catalogue + order data. Admin login required.
+Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/clean-db',[\App\Http\Controllers\AdminMaintenanceController::class,'clean'])->name('clean-db');
+});
 Route::get('/pages/{page:slug}',function(\App\Models\CmsPage $page){abort_unless($page->published,404);return view('shop.cms-page',compact('page'));})->name('pages.show');
