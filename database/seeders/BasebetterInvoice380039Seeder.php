@@ -18,8 +18,8 @@ use RuntimeException;
  * Run only this seeder using:
  *   php artisan db:seed --class=Database\\Seeders\\BasebetterInvoice380039Seeder
  *
- * Safe to rerun: records are created only if absent; existing prices, stock,
- * images, attributes, variant settings and customer-specific prices are untouched.
+ * Safe to rerun: related SKUs are grouped as selectable variants; existing prices,
+ * stock, images, attributes, variant settings and customer prices are untouched.
  *
  * ATTENTION:
  * - All supplier invoice unit costs EXCLUDE VAT. Selling pack price = cost + 20% markup.
@@ -38,6 +38,11 @@ class BasebetterInvoice380039Seeder extends Seeder
     private const MARKUP_PERCENT = 20;
     private const VAT_BPS = 2000;
 
+    /**
+     * Related invoice lines become selectable SKUs within a single product.
+     * Reruns preserve existing merchant pricing, stock, flags and attributes.
+     * Previous V18 one-product-per-invoice-line drafts are consolidated safely.
+     */
     public function run(): void
     {
         $useInvoiceStock = filter_var(env('WHOLESALE_INV380039_USE_INVOICE_QUANTITIES', false), FILTER_VALIDATE_BOOLEAN);
@@ -51,47 +56,66 @@ class BasebetterInvoice380039Seeder extends Seeder
                 'cups' => $cups,
             ];
 
-            foreach ($this->items() as [$sku, $name, $categoryKey, $units, $costPence, $invoiceBoxes, $attributes]) {
-                $category = $categories[$categoryKey];
-                $slug = 'basebetter-inv380039-' . strtolower(substr($sku, -2));
-                $description = $this->description($name, $units);
+            $groups = $this->productGroups();
+            foreach ($groups as $key => $group) {
+                [$slug, $name, $categoryKey, $description] = $group;
                 $product = Product::where('slug', $slug)->first();
-                $existingSku = ProductVariant::where('sku', $sku)->first();
-
-                // Never attach our invoice SKU to another merchant product.
-                if ($existingSku && (!$product || (int) $existingSku->product_id !== (int) $product->id)) {
-                    throw new RuntimeException('SKU collision: ' . $sku . '. Resolve before seeding.');
-                }
-                if ($product && !$existingSku && $product->variants()->exists()) {
-                    throw new RuntimeException('Product slug collision: ' . $slug . '. Resolve before seeding.');
-                }
-
                 if (!$product) {
                     $product = Product::create([
                         'slug' => $slug,
-                        'category_id' => $category->id,
+                        'category_id' => $categories[$categoryKey]->id,
                         'name' => $name,
                         'description' => $description,
                         'image_path' => null,
                         'active' => false,
-                        'meta_title' => $name . ' | Wholesale Eco Products',
+                        'meta_title' => Str::limit($name . ' | Wholesale Eco Products', 250, ''),
                         'meta_description' => Str::limit($description, 155, ''),
                         'sort_order' => 100,
                     ]);
+                } elseif ((int) $product->category_id !== (int) $categories[$categoryKey]->id) {
+                    throw new RuntimeException('Grouped product category mismatch for ' . $slug . '. Review manually.');
                 }
+                $groups[$key]['product'] = $product;
+            }
 
-                if (!$existingSku) {
-                    // Integer arithmetic ensures deterministic rounding to the nearest penny.
+            foreach ($this->items() as [$sku, $name, $categoryKey, $units, $costPence, $invoiceBoxes, $attributes]) {
+                $groupKey = $this->groupForSku($sku);
+                $product = $groups[$groupKey]['product'];
+                $oldSlug = 'basebetter-inv380039-' . strtolower(substr($sku, -2));
+                $variant = ProductVariant::where('sku', $sku)->first();
+
+                if ($variant) {
+                    if ((int) $variant->product_id !== (int) $product->id) {
+                        // Migrate only a previously-seeded single-SKU draft.
+                        $old = Product::findOrFail($variant->product_id);
+                        if ($old->slug !== $oldSlug || $old->name !== $name || ($variant->attributes['source_invoice'] ?? null) !== self::SOURCE || $old->active || $old->images()->exists()
+                            || $old->variants()->count() !== 1) {
+                            throw new RuntimeException('Cannot automatically regroup edited/published SKU ' . $sku . '. Resolve manually.');
+                        }
+                        $variant->update(['product_id' => $product->id]);
+                        // Old draft now has no variants; remove it to avoid empty catalogue entries.
+                        $old->delete();
+                    }
+                    // Keep any merchant-edited variant label/price/stock/attributes intact.
+                } else {
+                    // Do not adopt unknown merchant SKUs or duplicate invoice lines.
+                    $legacy = Product::where('slug', $oldSlug)->first();
+                    if ($legacy && ($legacy->active || $legacy->images()->exists() || $legacy->variants()->exists())) {
+                        throw new RuntimeException('Conflicting legacy product ' . $oldSlug . '. Resolve manually.');
+                    }
+                    if ($legacy) $legacy->delete();
+
                     $sellingPence = intdiv($costPence * (100 + self::MARKUP_PERCENT) + 50, 100);
-                    ProductVariant::create([
+                    $variant = ProductVariant::create([
                         'product_id' => $product->id,
                         'sku' => $sku,
-                        'label' => 'Box of ' . number_format($units) . ' units',
+                        'label' => $this->variantLabel($sku, $name),
                         'attributes' => array_merge($attributes, [
                             'purchase_cost_gbp' => number_format($costPence / 100, 2, '.', ''),
                             'markup_percent' => self::MARKUP_PERCENT,
                             'invoice_purchased_boxes' => $invoiceBoxes,
                             'sku_is_provisional' => true,
+                            'variant_option' => $this->variantLabel($sku, $name),
                         ]),
                         'units_per_pack' => $units,
                         'packs_per_pallet' => null,
@@ -105,8 +129,6 @@ class BasebetterInvoice380039Seeder extends Seeder
                     ]);
                 }
 
-                // The supplier invoice has no photographs. Only connect locally
-                // supplied, verified paths if the merchant explicitly adds them.
                 foreach ($this->verifiedPhotos()[$sku] ?? [] as $sort => $path) {
                     if (!Storage::disk('public')->exists($path)) {
                         throw new RuntimeException('Missing image on public disk: ' . $path);
@@ -121,6 +143,62 @@ class BasebetterInvoice380039Seeder extends Seeder
                 }
             }
         });
+    }
+
+    /** [slug, name, category key, description] */
+    private function productGroups(): array
+    {
+        return [
+            'bowls' => ['basebetter-kraft-bowls', 'Kraft Bowls – 500ml to 1300ml', 'kraft-bowls-and-lids', 'Kraft food bowls in four capacities. Select 500ml, 750ml, 1000ml or 1300ml; 300 bowls per box. Lids sold separately.'],
+            'bowl-lids' => ['basebetter-pp-bowl-lids', 'PP Lids for Kraft Bowls', 'kraft-bowls-and-lids', 'Polypropylene lids in 150mm and 185mm sizes. Select the correct diameter for your bowl; 300 lids per box.'],
+            'deli-boxes' => ['basebetter-deli-boxes', 'Takeaway Boxes – No.1, No.5 & No.8', 'kraft-deli-boxes-invoice', 'Takeaway boxes in 750ml, 1000ml and 1300ml variants. Pack quantities vary by size; see selected option.'],
+            'sauce-cups' => ['basebetter-sauce-cups', 'Kraft Sauce Cups – 8oz', 'cups', 'Kraft sauce cups, 8oz size, 500 per box.'],
+            'soup-lids' => ['basebetter-soup-cup-lids', 'PP Soup Cup Lids – 97mm', 'cups', 'Polypropylene lids for 8oz and 16oz soup cups, 97mm diameter, 500 per box.'],
+            'bowl-inserts' => ['basebetter-bowl-inserts', 'PP Inserts for Kraft Bowls', 'kraft-bowls-and-lids', 'Polypropylene bowl inserts in 2-compartment, 3-compartment and 185mm options. Confirm bowl compatibility for each selection.'],
+            'burger-boxes' => ['basebetter-bagasse-burger-box', 'Bagasse Burger Box – 6×6in', 'bagasse-takeaway-packaging', 'Bagasse burger boxes, 6×6 inch, 500 per box.'],
+            'bagasse-boxes' => ['basebetter-bagasse-takeaway-boxes', 'Bagasse Takeaway Boxes', 'bagasse-takeaway-packaging', 'Bagasse takeaway boxes with 7.5×6, 7×5 and 9×6 inch options. Pack quantity varies by size.'],
+        ];
+    }
+
+    private function groupForSku(string $sku): string
+    {
+        $number = (int) substr($sku, -2);
+        return match ($number) {
+            1, 3, 4, 5 => 'bowls',
+            2, 6 => 'bowl-lids',
+            7, 8, 9 => 'deli-boxes',
+            10 => 'sauce-cups',
+            11 => 'soup-lids',
+            12, 13, 15 => 'bowl-inserts',
+            14 => 'burger-boxes',
+            16, 17, 18 => 'bagasse-boxes',
+            default => throw new RuntimeException('Unknown invoice SKU: ' . $sku),
+        };
+    }
+
+    private function variantLabel(string $sku, string $name): string
+    {
+        $labels = [
+            '01' => '1300ml · 300/box',
+            '02' => '185mm PP lid · 300/box',
+            '03' => '1000ml · 300/box',
+            '04' => '750ml · 300/box',
+            '05' => '500ml · 300/box',
+            '06' => '150mm PP lid · 300/box',
+            '07' => 'No.1 · 750ml · 450/box',
+            '08' => 'No.5 · 1000ml · 200/box',
+            '09' => 'No.8 · 1300ml · 200/box',
+            '10' => '8oz · 500/box',
+            '11' => '97mm · 500/box',
+            '12' => '2 compartments · 300/box',
+            '13' => '3 compartments · 300/box',
+            '14' => '6×6in · 500/box',
+            '15' => '185mm insert · 300/box',
+            '16' => '7.5×6in · 500/box',
+            '17' => '7×5in · 500/box',
+            '18' => '9×6in · 250/box',
+        ];
+        return $labels[substr($sku, -2)] ?? $name;
     }
 
     private function category(string $slug, string $name, ?int $parentId): Category
