@@ -66,6 +66,10 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
  Route::post('/products/{product}/duplicate', [\App\Http\Controllers\ProductWorkspaceController::class,'duplicate'])->name('workspace.duplicate');
 });
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+ Route::get('/products/import', [\App\Http\Controllers\AdminProductImportController::class,'index'])->name('products.import.index');
+ Route::get('/products/import/template', [\App\Http\Controllers\AdminProductImportController::class,'template'])->name('products.import.template');
+ Route::post('/products/import/preview', [\App\Http\Controllers\AdminProductImportController::class,'preview'])->name('products.import.preview');
+ Route::post('/products/import/commit', [\App\Http\Controllers\AdminProductImportController::class,'commit'])->name('products.import.commit');
  Route::get('/products',[AdminPortalController::class,'products'])->name('products.index');
  Route::post('/products/{product}/move',[AdminPortalController::class,'moveProduct'])->name('products.move');
  Route::post('/categories/{category}/move',[AdminPortalController::class,'moveCategory'])->name('categories.move');

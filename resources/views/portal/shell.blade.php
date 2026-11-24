@@ -9,6 +9,7 @@
   <a class="{{request()->routeIs('admin.dashboard')?'active':''}}" href="{{route('admin.dashboard')}}">▦ &nbsp; Overview</a>
   <a class="{{request()->routeIs('admin.orders.*')?'active':''}}" href="{{route('admin.orders.index')}}">▤ &nbsp; Orders &amp; Fulfilment</a>
   <a class="{{request()->routeIs('admin.products.*')?'active':''}}" href="{{route('admin.products.index')}}">▣ &nbsp; Product Catalogue</a>
+  <a class="{{request()->routeIs('admin.products.import.*')?'active':''}}" href="{{route('admin.products.import.index')}}">↑ &nbsp; Import Products</a>
   <a class="{{request()->routeIs('admin.categories.*')?'active':''}}" href="{{route('admin.categories.index')}}">↳ &nbsp; Manage Categories</a>
   <a class="{{request()->routeIs('admin.variants','admin.stock','admin.tier')?'active':''}}" href="{{route('admin.variants')}}">▥ &nbsp; Inventory &amp; Stock</a>
   <a class="{{request()->routeIs('admin.variants','admin.tier')?'active':''}}" href="{{route('admin.variants')}}">£ &nbsp; Wholesale Pricing</a>
